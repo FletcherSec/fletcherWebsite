@@ -21,16 +21,18 @@ mkdir -p "$WEBROOT"
 chown -R deploy:deploy "$WEBROOT"
 
 # dedicated CI keypair — the private half goes in the repo's DEPLOY_SSH_KEY
-# secret; your admin key is never shared with GitHub
+# secret; your admin key is never shared with GitHub. Re-running rotates the
+# key (old github-deploy entries are replaced), so always update the secret.
 install -d -m 700 -o deploy -g deploy /home/deploy/.ssh
-if [ ! -f /home/deploy/.ssh/authorized_keys ] || ! grep -q github-deploy /home/deploy/.ssh/authorized_keys 2>/dev/null; then
-  sudo -u deploy ssh-keygen -t ed25519 -C github-deploy -N '' -f /tmp/github_deploy
-  cat /tmp/github_deploy.pub >> /home/deploy/.ssh/authorized_keys
-  chown deploy:deploy /home/deploy/.ssh/authorized_keys
-  chmod 600 /home/deploy/.ssh/authorized_keys
-  DEPLOY_KEY=$(cat /tmp/github_deploy)
-  rm -f /tmp/github_deploy /tmp/github_deploy.pub
-fi
+touch /home/deploy/.ssh/authorized_keys
+sed -i '/github-deploy/d' /home/deploy/.ssh/authorized_keys
+rm -f /tmp/github_deploy /tmp/github_deploy.pub
+sudo -u deploy ssh-keygen -q -t ed25519 -C github-deploy -N '' -f /tmp/github_deploy
+cat /tmp/github_deploy.pub >> /home/deploy/.ssh/authorized_keys
+chown deploy:deploy /home/deploy/.ssh/authorized_keys
+chmod 600 /home/deploy/.ssh/authorized_keys
+DEPLOY_KEY=$(cat /tmp/github_deploy)
+rm -f /tmp/github_deploy /tmp/github_deploy.pub
 
 # --- ssh hardening (cloud images mostly default to this; make it explicit) --
 cat > /etc/ssh/sshd_config.d/99-hardening.conf <<'EOF'
@@ -38,7 +40,10 @@ PasswordAuthentication no
 PermitRootLogin no
 KbdInteractiveAuthentication no
 EOF
-systemctl reload ssh
+# Ubuntu 24.04 socket-activates sshd: when idle there is no service to
+# reload, and each new connection picks up the config fresh — so a failed
+# reload here is fine.
+systemctl reload ssh 2>/dev/null || true
 
 # --- firewall + fail2ban -----------------------------------------------------
 ufw allow OpenSSH
