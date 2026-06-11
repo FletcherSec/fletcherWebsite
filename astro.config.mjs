@@ -4,8 +4,7 @@ import sitemap from '@astrojs/sitemap';
 
 // https://astro.build/config
 export default defineConfig({
-  // TODO: replace with the real production URL before deploy
-  site: 'https://jweaver.dev',
+  site: 'https://fletched.me',
   integrations: [sitemap()],
   // Disable the in-page Astro dev toolbar (the floating dev-only popup).
   devToolbar: { enabled: false },
