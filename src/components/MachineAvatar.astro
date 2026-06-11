@@ -1,0 +1,45 @@
+---
+// Machine "pfp": the official HTB avatar when we have one (frontmatter `avatar`,
+// populated by scripts/scrape-htb-avatars.mjs), else a generated initials badge.
+// Used on both the writeups gallery rows and the writeup page header so the icon
+// is identical in both places.
+interface Props {
+  machine: string;
+  avatar?: string;
+  size?: number;
+}
+const { machine, avatar, size = 34 } = Astro.props;
+const initials = machine.replace(/[^a-z0-9]/gi, '').slice(0, 2).toUpperCase();
+const dim = `${size}px`;
+---
+{avatar ? (
+  <img
+    class="m-avatar m-avatar--img"
+    src={avatar}
+    width={size}
+    height={size}
+    style={`width:${dim};height:${dim}`}
+    alt={`${machine} avatar`}
+    loading="lazy"
+    decoding="async"
+  />
+) : (
+  <div class="m-avatar" aria-hidden="true" style={`width:${dim};height:${dim};font-size:${Math.round(size * 0.42)}px`}>
+    {initials}
+  </div>
+)}
+
+<style>
+  .m-avatar {
+    flex: none; border-radius: 4px;
+    display: grid; place-items: center;
+    font-family: var(--font-head); font-weight: 700; line-height: 1;
+    color: var(--bg);
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  }
+  /* real avatars are transparent PNGs — keep them whole, sit them on an elevated tile */
+  .m-avatar--img {
+    object-fit: contain; padding: 2px;
+    background: var(--bg-elev); border: 1px solid var(--border);
+  }
+</style>

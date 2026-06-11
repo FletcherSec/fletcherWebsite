@@ -1,0 +1,196 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import MachineAvatar from './MachineAvatar.astro';
+import { machineAvatars } from '../data/machineAvatars';
+
+interface Props {
+  writeups: CollectionEntry<'writeups'>[];
+  /** teaser mode: render only this many rows, no filters, link to the archive */
+  limit?: number;
+  /** where the teaser "open archive" line points */
+  archiveHref?: string;
+  /** sticky filter bar (archive) */
+  sticky?: boolean;
+  /** rows visible before "load more" appears (0 = show all). Archive only. */
+  pageSize?: number;
+  tick?: string;
+  heading?: string;
+}
+const {
+  writeups,
+  limit,
+  archiveHref = '/writeups',
+  sticky = false,
+  pageSize = 0,
+  tick = '01.',
+  heading = 'writeups',
+} = Astro.props;
+
+const DIFF_ORDER: Record<string, number> = { Easy: 1, Medium: 2, Hard: 3, Insane: 4 };
+
+const sorted = [...writeups].sort((a, b) => +b.data.date - +a.data.date);
+const total = sorted.length;
+const isTeaser = typeof limit === 'number';
+const items = isTeaser ? sorted.slice(0, limit) : sorted;
+
+const present = new Set(sorted.map((i) => i.data.category));
+const catOptions = ['All', ...['Linux', 'Windows', 'AD', 'Other'].filter((c) => present.has(c))];
+const diffOptions = ['All', 'Easy', 'Medium', 'Hard', 'Insane'];
+
+const fmt = (d: Date) => d.toISOString().slice(0, 10);
+---
+
+<section id="writeups">
+  <div class="container">
+    <div class="section-head">
+      {tick && <span class="tick">{tick}</span>}
+      <h2>{heading}</h2>
+      <span class="section-sub">
+        {isTeaser
+          ? `/ latest ${items.length} of ${total} — type \`cd writeups\` or open the archive`
+          : `/ ${total} HTB machines, rooted & documented`}
+      </span>
+    </div>
+
+    {!isTeaser && (
+      <div class={`filters${sticky ? ' sticky' : ''}`}>
+        <input class="search" id="wu-search" type="search" placeholder="$ grep machine, tag, technique…" autocomplete="off" />
+        <div class="chip-group" data-group="cat">
+          {catOptions.map((o) => (
+            <button class="chip" data-cat={o} aria-pressed={o === 'All' ? 'true' : 'false'}>{o}</button>
+          ))}
+        </div>
+        <div class="chip-group" data-group="diff">
+          {diffOptions.map((d) => (
+            <button class="chip" data-diff={d} aria-pressed={d === 'All' ? 'true' : 'false'}>{d}</button>
+          ))}
+        </div>
+        <select class="select" id="wu-sort" aria-label="Sort writeups">
+          <option value="new">newest</option>
+          <option value="diff">difficulty</option>
+          <option value="az">A–Z</option>
+        </select>
+        <span class="wu-count" id="wu-count"></span>
+      </div>
+    )}
+
+    <div class="gallery" id="wu-gallery" data-page-size={pageSize}>
+      {items.map((w) => (
+        <a
+          href={`/writeups/${w.id}/`}
+          class="wu-card"
+          data-name={w.data.machine.toLowerCase()}
+          data-cat={w.data.category}
+          data-diff={w.data.difficulty}
+          data-difforder={DIFF_ORDER[w.data.difficulty]}
+          data-date={fmt(w.data.date)}
+          data-tags={w.data.tags.join(' ')}
+        >
+          <div class="wu-top">
+            <MachineAvatar machine={w.data.machine} avatar={w.data.avatar ?? machineAvatars[w.id]} size={34} />
+            <div>
+              <div class="wu-name">{w.data.machine}</div>
+              <div class="wu-platform">{w.data.platform}</div>
+            </div>
+            <div class="wu-meta">
+              <span class={`badge cat-${w.data.category}`}>{w.data.category}</span>
+              <span class={`badge d-${w.data.difficulty}`}>{w.data.difficulty}</span>
+            </div>
+          </div>
+          <p class="wu-summary">{w.data.summary}</p>
+          <div class="wu-tags">
+            {w.data.tags.slice(0, 5).map((t) => <span class="tag">{t}</span>)}
+          </div>
+        </a>
+      ))}
+    </div>
+
+    {!isTeaser && <p class="empty" id="wu-empty" hidden>// no machines match that filter</p>}
+    {!isTeaser && pageSize > 0 && (
+      <div class="gallery-foot">
+        <button class="btn show-more" id="wu-more" type="button" hidden>load more ↓</button>
+      </div>
+    )}
+
+    {isTeaser && (
+      <a class="ls-line" href={archiveHref}>
+        <span class="ls-prompt">$</span> ls ~/writeups
+        <span class="ls-muted">→ {total} {total === 1 ? 'entry' : 'entries'}</span>
+        <span class="ls-open">open archive →</span>
+      </a>
+    )}
+  </div>
+</section>
+
+{!isTeaser && (
+  <script>
+    const gallery = document.getElementById('wu-gallery');
+    const cards = gallery ? Array.from(gallery.querySelectorAll<HTMLElement>('.wu-card')) : [];
+    const search = document.getElementById('wu-search') as HTMLInputElement | null;
+    const sortSel = document.getElementById('wu-sort') as HTMLSelectElement | null;
+    const empty = document.getElementById('wu-empty');
+    const countEl = document.getElementById('wu-count');
+    const moreBtn = document.getElementById('wu-more');
+    const PAGE = Number(gallery?.dataset.pageSize) || 0;
+    const state = { cat: 'All', diff: 'All', q: '' };
+    let page = 1;
+
+    function resetPage() { page = 1; }
+
+    function groupClick(group: string, attr: string, key: 'cat' | 'diff') {
+      document.querySelectorAll<HTMLButtonElement>(`[data-group="${group}"] .chip`).forEach((btn) => {
+        btn.addEventListener('click', () => {
+          state[key] = btn.getAttribute(attr) || 'All';
+          document
+            .querySelectorAll(`[data-group="${group}"] .chip`)
+            .forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+          resetPage();
+          render();
+        });
+      });
+    }
+    groupClick('cat', 'data-cat', 'cat');
+    groupClick('diff', 'data-diff', 'diff');
+
+    search?.addEventListener('input', () => { state.q = search.value.toLowerCase().trim(); resetPage(); render(); });
+    sortSel?.addEventListener('change', () => { resetPage(); render(); });
+    moreBtn?.addEventListener('click', () => { page += 1; render(); });
+
+    function matches(c: HTMLElement) {
+      const okCat = state.cat === 'All' || c.dataset.cat === state.cat;
+      const okDiff = state.diff === 'All' || c.dataset.diff === state.diff;
+      const hay = `${c.dataset.name} ${c.dataset.tags} ${c.dataset.cat} ${c.dataset.diff}`.toLowerCase();
+      const okQ = !state.q || hay.includes(state.q);
+      return okCat && okDiff && okQ;
+    }
+
+    function render() {
+      if (!gallery) return;
+      // sort first so the visible "page" is the right slice
+      const order = [...cards].sort((a, b) => {
+        if (sortSel?.value === 'az') return (a.dataset.name || '').localeCompare(b.dataset.name || '');
+        if (sortSel?.value === 'diff') return Number(b.dataset.difforder) - Number(a.dataset.difforder);
+        return (b.dataset.date || '').localeCompare(a.dataset.date || '');
+      });
+      order.forEach((c) => gallery.appendChild(c));
+
+      const cap = PAGE > 0 ? page * PAGE : Infinity;
+      let matched = 0, visible = 0;
+      order.forEach((c) => {
+        if (matches(c)) {
+          matched++;
+          const show = matched <= cap;
+          c.style.display = show ? '' : 'none';
+          if (show) visible++;
+        } else {
+          c.style.display = 'none';
+        }
+      });
+
+      if (empty) empty.hidden = matched !== 0;
+      if (countEl) countEl.textContent = matched ? `// showing ${visible} / ${matched}` : '';
+      if (moreBtn) moreBtn.hidden = !(PAGE > 0 && matched > cap);
+    }
+    render();
+  </script>
+)}

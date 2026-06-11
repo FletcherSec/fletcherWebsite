@@ -1,7 +1,32 @@
 ---
-const msg = 'scaffold ok';
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Nav from '../components/Nav.astro';
+import Hero from '../components/Hero.astro';
+import WriteupsGallery from '../components/WriteupsGallery.astro';
+import Projects from '../components/Projects.astro';
+import Certs from '../components/Certs.astro';
+import Profiles from '../components/Profiles.astro';
+import LinkedInFeed from '../components/LinkedInFeed.astro';
+import About from '../components/About.astro';
+import Footer from '../components/Footer.astro';
+import { certs } from '../data/site';
+import profiles from '../data/profiles.json';
+
+const writeups = (await getCollection('writeups')).filter((w) => !w.data.draft);
+const projects = await getCollection('projects');
+
+// "rooms completed" = HTB machines rooted + rooms completed on TryHackMe
+const roomsCompleted = (profiles.hackthebox?.systemOwns ?? 0) + (profiles.tryhackme?.rooms ?? 0);
 ---
-<html lang="en">
-  <head><meta charset="utf-8" /><title>smoke test</title></head>
-  <body><h1>{msg}</h1></body>
-</html>
+<BaseLayout>
+  <Nav />
+  <Hero machines={roomsCompleted} writeups={writeups.length} certs={certs.length} />
+  <Profiles />
+  <WriteupsGallery writeups={writeups} limit={6} archiveHref="/writeups" tick="02." />
+  <Projects projects={projects} />
+  <Certs />
+  <LinkedInFeed />
+  <About />
+  <Footer />
+</BaseLayout>

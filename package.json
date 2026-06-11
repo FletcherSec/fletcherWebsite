@@ -8,12 +8,17 @@
     "start": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
+    "scrape": "node scripts/scrape-profiles.mjs",
+    "scrape:avatars": "node scripts/scrape-htb-avatars.mjs",
+    "scrape:github": "node scripts/scrape-github.mjs",
+    "scrape:linkedin": "node scripts/scrape-linkedin.mjs",
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/mdx": "^4.2.0",
-    "@astrojs/rss": "^4.0.11",
     "@astrojs/sitemap": "^3.2.1",
     "astro": "^5.5.0"
+  },
+  "devDependencies": {
+    "playwright": "^1.60.0"
   }
 }

@@ -1,0 +1,411 @@
+---
+import { getCollection } from 'astro:content';
+
+// absolute (/#id) so the nav works from any page, not just the homepage
+const links = [
+  { href: '/', label: 'home' },
+  { href: '/writeups', label: 'writeups' },
+  { href: '/#projects', label: 'projects' },
+  { href: '/#certs', label: 'certs' },
+  { href: '/#activity', label: 'activity' },
+  { href: '/#about', label: 'about' },
+];
+
+// valid writeup paths, so the prompt can `cd /writeups/<name>` and reject typos
+const slugs = (await getCollection('writeups'))
+  .filter((w) => !w.data.draft)
+  .map((w) => w.id)
+  .sort();
+---
+<style>
+  .nav-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    width: 100%; gap: 1rem;
+    padding-inline: clamp(0.6rem, 2vw, 1.2rem); /* keep the bar full-bleed but off the screen edges */
+  }
+
+  /* interactive terminal prompt — path-aware navigation, NOT a real shell */
+  .brand-term {
+    display: inline-flex;
+    align-items: center;
+    gap: 0; /* keep the cursor tight against the $ */
+    font-family: var(--font-mono);
+    cursor: text;
+    /* fill the whole bar left of the nav links so a click anywhere there
+       focuses the terminal, not just on the prompt text itself */
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: hidden;
+  }
+  /* prompt + input must never shrink — the completion menu (.cmd-msg) is the
+     only flex item allowed to give up space, so options can't eat typed text */
+  .brand-term .prompt { white-space: pre; flex: none; display: inline-flex; min-width: 0; }
+  /* narrow screens: the path is the one part of the prompt allowed to give up
+     space, so a long ~/writeups/<name>.md can't push the bar past the viewport */
+  @media (max-width: 640px) {
+    .brand-term .prompt { flex: 0 1 auto; }
+    .brand-term .prompt .cwd { overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 0 1 auto; }
+  }
+  .brand-term .prompt b { color: var(--accent); }
+  .brand-term .prompt .at { color: var(--fg); opacity: 0.85; }
+  .brand-term .prompt .cwd,
+  .brand-term .prompt .sep { color: var(--fg-dim); }
+
+  .cmd-input {
+    background: transparent; border: 0; outline: 0; padding: 0; margin: 0;
+    font: inherit; color: var(--fg);
+    caret-color: transparent; /* hide native blinking caret; we draw a static one */
+    width: 0; flex: none;
+  }
+  /* static solid block cursor — no blink, like a focused real terminal */
+  .bcaret {
+    width: 0.6ch; height: 1.05em;
+    background: var(--accent); display: inline-block; flex: none;
+  }
+  .cmd-msg {
+    margin-left: 1.2ch; font-size: 0.8rem; color: var(--fg-dim); white-space: nowrap;
+    flex: 0 1 auto; min-width: 0; overflow: hidden; /* absorbs the squeeze; clips at the edge */
+  }
+  .cmd-msg.err { color: var(--danger); }
+  /* tab-completion menu: full option list in grey, active pick highlighted */
+  .cmd-msg :global(.cmp-cur) {
+    color: var(--bg); background: var(--accent);
+    padding: 0 0.4ch; border-radius: 3px; font-weight: 700;
+  }
+  .cmd-msg :global(.cmp-el) { opacity: 0.5; }
+
+</style>
+
+<nav class="nav">
+  <div class="container nav-bar">
+    <div class="brand brand-term" id="brandTerm" data-slugs={JSON.stringify(slugs)}>
+      <span class="prompt"><b>fletcher</b><span class="at">@portfolio</span><span class="sep">:</span><span class="cwd" id="cwd">~</span><span class="sep">$ </span></span>
+      <input
+        id="cmdInput"
+        class="cmd-input"
+        type="text"
+        autocomplete="off"
+        autocapitalize="off"
+        autocorrect="off"
+        spellcheck="false"
+        aria-label="terminal command input"
+      />
+      <span class="bcaret"></span>
+      <span class="cmd-msg" id="cmdMsg" aria-live="polite"></span>
+    </div>
+    <ul>
+      {links.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+    </ul>
+  </div>
+</nav>
+
+<script>
+  // Path-aware terminal prompt. The "filesystem":
+  //   ~              → /                  (home)
+  //   ~/writeups     → /writeups          (archive directory)
+  //   ~/writeups/X.md→ /writeups/X        (a writeup "file")
+  // Homepage sections (projects/stats/certs/activity/about) are anchors on ~,
+  // navigable like directories with `cd`. Writeups are FILES: you `cat`/`open`
+  // them to read, `cd` only changes directories. NOT a real shell — only known
+  // paths resolve.
+  const SECTIONS = new Set(['projects', 'stats', 'certs', 'activity', 'about']);
+
+  const term = document.getElementById('brandTerm');
+  const input = document.getElementById('cmdInput') as HTMLInputElement | null;
+  const cwdEl = document.getElementById('cwd');
+  const msg = document.getElementById('cmdMsg');
+  let msgTimer: number | undefined;
+
+  let slugs = new Set<string>();
+  try { slugs = new Set(JSON.parse(term?.dataset.slugs || '[]')); } catch (e) {}
+
+  function flash(text: string, isErr = false) {
+    if (!msg) return;
+    msg.textContent = text;
+    msg.classList.toggle('err', isErr);
+    window.clearTimeout(msgTimer);
+    msgTimer = window.setTimeout(() => { msg.textContent = ''; msg.classList.remove('err'); }, 3600);
+  }
+
+  const norm = (p: string) => { const s = p.replace(/\/+$/, ''); return s === '' ? '/' : s; };
+  const cur = () => norm(location.pathname);
+
+  function label(p: string) {
+    p = norm(p);
+    if (p === '/') return '~';
+    if (p === '/writeups') return '~/writeups';
+    const m = p.match(/^\/writeups\/([^/]+)$/);
+    if (m) return '~/writeups/' + m[1] + '.md';
+    return '~' + p;
+  }
+  function setCwd() { if (cwdEl) cwdEl.textContent = label(cur()); }
+
+  function parent(p: string) {
+    p = norm(p);
+    if (/^\/writeups\/[^/]+$/.test(p)) return '/writeups';
+    if (p === '/writeups') return '/';
+    return '/';
+  }
+
+  // strip a writeup arg down to its bare slug: drop ~/ ./ leading slash,
+  // a writeups/ prefix, and a trailing .md — '' if it's not a writeup ref.
+  function slugOf(arg: string): string {
+    return arg.trim().toLowerCase()
+      .replace(/\/+$/, '').replace(/^~?\.?\//, '')
+      .replace(/^writeups\//, '').replace(/\.md$/, '');
+  }
+
+  // resolve a `cd` argument → a DIRECTORY destination, or an error code
+  function resolveDir(arg: string): { path?: string; hash?: string } | 'notdir' | null {
+    const a = arg.trim();
+    if (a === '' || a === '~' || a === '/' || a === '~/' || a === 'home') return { path: '/' };
+    if (a === '..') return { path: parent(cur()) };
+    if (a === '.') return { path: cur() };
+
+    const low = a.toLowerCase().replace(/\/+$/, '').replace(/^~?\.?\//, '');
+    if (SECTIONS.has(low)) return { hash: low };
+    if (low === 'writeups') return { path: '/writeups' };
+    // pointing cd at a writeup file is a "not a directory" error, like a real shell
+    const s = slugOf(a);
+    if (slugs.has(s)) return 'notdir';
+    return null;
+  }
+
+  function go(dest: { path?: string; hash?: string }) {
+    if (dest.hash) {
+      const el = document.querySelector('#' + dest.hash);
+      if (el && cur() === '/') { el.scrollIntoView({ behavior: 'smooth' }); history.replaceState(null, '', '#' + dest.hash); }
+      else window.location.href = '/#' + dest.hash;
+      return;
+    }
+    const p = norm(dest.path || '/');
+    if (p === cur()) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+    window.location.href = p === '/' ? '/' : p + '/'; // Astro pages use a trailing slash
+  }
+
+  // `cat`/`open <file>` — view a writeup. Only writeup files are "readable".
+  function openFile(cmd: string, arg: string) {
+    const a = arg.trim();
+    if (a === '') { flash(cmd + ': missing operand — try `' + cmd + ' forest`', true); return; }
+    const low = a.toLowerCase().replace(/\/+$/, '').replace(/^~?\.?\//, '');
+    if (low === 'writeups' || SECTIONS.has(low)) { flash(cmd + ': ' + a + ': Is a directory', true); return; }
+    const s = slugOf(a);
+    if (slugs.has(s)) { flash('opening ~/writeups/' + s + '.md …'); go({ path: '/writeups/' + s }); return; }
+    flash(cmd + ': ' + a + ': No such file or directory', true);
+  }
+
+  function lsListing() {
+    const p = cur();
+    if (p === '/writeups') {
+      return slugs.size + ' writeups — `cat <name>` to read (e.g. cat forest)';
+    }
+    if (/^\/writeups\/[^/]+$/.test(p)) {
+      return cur().split('/').pop() + '.md — `cd ..` back to writeups';
+    }
+    return 'writeups/  projects  stats  certs  activity  about';
+  }
+
+  function run(raw: string) {
+    const t = raw.trim();
+    if (t === '') return; // empty line — just a fresh prompt
+
+    const [head, ...rest] = t.split(/\s+/);
+    const cmd = head.toLowerCase();
+    const arg = rest.join(' ');
+
+    switch (cmd) {
+      case 'clear': window.scrollTo({ top: 0, behavior: 'smooth' }); return;
+      case 'whoami': flash('fletcher — cybersecurity grad · CTF player'); return;
+      case 'pwd': flash('/home/fletcher' + (cur() === '/' ? '' : cur())); return;
+      case 'sudo': flash(rest.length ? "we're all root in our hearts — denied anyway ☺" : 'usage: sudo <command>', true); return;
+      case 'help': case 'man': case '?':
+        flash('cmds: ls · cd <dir> · cat/open <file> · pwd · whoami · clear — e.g. `cd writeups` then `cat forest`');
+        return;
+      case 'ls': case 'll': case 'dir': flash(lsListing()); return;
+      case 'cat': case 'open': case 'less': case 'more': case 'vim': case 'nano':
+        openFile(cmd === 'open' ? 'open' : 'cat', arg); return;
+    }
+
+    // bare `cd` or a bare directory token
+    const isCd = cmd === 'cd';
+    const target = isCd ? arg : t;
+    const dest = resolveDir(target);
+    if (dest === 'notdir') { flash('cd: ' + target + ': Not a directory — use `cat ' + slugOf(target) + '`', true); return; }
+    if (!dest) {
+      flash((isCd ? 'cd: ' : 'command not found: ') + (isCd ? target + ': No such file or directory' : head), true);
+      return;
+    }
+    go(dest);
+  }
+
+  function sizeInput() { if (input) input.style.width = input.value.length + 'ch'; }
+
+  // ---- tab completion --------------------------------------------------
+  // bash/zsh-style: a unique match fills in; multiple matches list out and each
+  // further Tab cycles to the next (Enter accepts whatever is currently filled).
+  const COMMANDS = ['cat', 'cd', 'clear', 'help', 'ls', 'open', 'pwd', 'whoami'];
+  // `applied` = the exact value we last wrote, so we can tell a continued Tab
+  // cycle from the user having typed something new. `winStart` = first item shown
+  // in the sliding window.
+  let comp: { base: string; list: string[]; idx: number; applied: string; winStart: number } | null = null;
+
+  // what can the current token complete to? → { base (text kept), list (sorted) }
+  function candidatesFor(value: string) {
+    const sp = value.indexOf(' ');
+    if (sp === -1) {
+      // still typing the command itself
+      const low = value.toLowerCase();
+      return { base: '', list: COMMANDS.filter((c) => c.startsWith(low)) };
+    }
+    const base = value.slice(0, value.lastIndexOf(' ') + 1); // command + spaces
+    const token = value.slice(value.lastIndexOf(' ') + 1).toLowerCase();
+    const cmd = value.slice(0, sp).toLowerCase();
+    let pool: string[] = [];
+    if (cmd === 'cd') pool = ['..', 'writeups', ...SECTIONS];
+    else if (['cat', 'open', 'less', 'more', 'vim', 'nano'].includes(cmd)) pool = [...slugs];
+    const list = pool.filter((x) => x.toLowerCase().startsWith(token)).sort();
+    return { base, list };
+  }
+
+  // how many monospace chars fit in the message area right now (it shrinks as the
+  // typed value grows and pushes the message rightward toward the nav links)
+  let charW = 0;
+  function availChars(): number {
+    if (!msg || !term) return 48;
+    if (!charW) {
+      const s = document.createElement('span');
+      s.style.cssText = 'position:absolute;visibility:hidden;white-space:pre;font-family:var(--font-mono);font-size:0.8rem';
+      s.textContent = '0000000000';
+      document.body.appendChild(s);
+      charW = s.getBoundingClientRect().width / 10 || 7.7;
+      s.remove();
+    }
+    const px = term.getBoundingClientRect().right - msg.getBoundingClientRect().left - 6;
+    return Math.max(10, Math.floor(px / charW));
+  }
+
+  // last item index that still fits starting from `start` (always shows ≥1)
+  function packEnd(list: string[], start: number, budget: number): number {
+    let used = start > 0 ? 2 : 0; // leading "… "
+    for (let i = start; i < list.length; i++) {
+      const w = (i > start ? 2 : 0) + list[i].length;
+      const tail = i < list.length - 1 ? 2 : 0; // reserve trailing " …"
+      if (i > start && used + w + tail > budget) return i - 1;
+      used += w;
+    }
+    return list.length - 1;
+  }
+
+  // render the full option list (grey), the one Enter would pick highlighted,
+  // inside a width-based sliding window that scrolls as you Tab past the edge
+  function showCandidates() {
+    if (!msg || !comp) return;
+    const budget = availChars();
+    if (comp.idx < comp.winStart) comp.winStart = comp.idx; // wrapped back to the front
+    let end = packEnd(comp.list, comp.winStart, budget);
+    while (comp.idx > end) { comp.winStart++; end = packEnd(comp.list, comp.winStart, budget); }
+
+    // candidates are repo-controlled (commands/sections/slugs) but they pass
+    // through innerHTML, so escape them anyway — a slug must never inject markup
+    const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+    const parts: string[] = [];
+    if (comp.winStart > 0) parts.push('<span class="cmp-el">…</span>');
+    for (let i = comp.winStart; i <= end; i++) {
+      parts.push(i === comp.idx ? `<b class="cmp-cur">${esc(comp.list[i])}</b>` : esc(comp.list[i]));
+    }
+    if (end < comp.list.length - 1) parts.push('<span class="cmp-el">…</span>');
+    msg.innerHTML = parts.join('&nbsp;&nbsp;');
+    msg.classList.remove('err');
+    window.clearTimeout(msgTimer);
+  }
+
+  function clearMsg() {
+    if (msg) { msg.textContent = ''; msg.classList.remove('err'); }
+  }
+
+  function handleTab() {
+    if (!input) return;
+    if (comp && input.value === comp.applied) {
+      comp.idx = (comp.idx + 1) % comp.list.length; // continue cycling
+    } else {
+      const { base, list } = candidatesFor(input.value);
+      if (!list.length) { comp = null; return; }
+      if (list.length === 1) { // unique → fill + trailing space, done
+        input.value = base + list[0] + ' ';
+        comp = null; sizeInput(); clearMsg();
+        return;
+      }
+      comp = { base, list, idx: 0, applied: '', winStart: 0 };
+    }
+    input.value = comp.base + comp.list[comp.idx];
+    comp.applied = input.value;
+    sizeInput();
+    showCandidates();
+  }
+
+  // preventScroll: focusing the prompt must not nudge the page (it sits in the
+  // sticky bar; the browser would otherwise try to scroll it into view)
+  const focusPrompt = () => input?.focus({ preventScroll: true });
+  term?.addEventListener('click', focusPrompt);
+  // real typing (not our programmatic fills) cancels an active completion cycle
+  input?.addEventListener('input', () => { comp = null; sizeInput(); });
+  input?.addEventListener('keydown', (e) => {
+    // ^C abandons the current line, like a real shell — unless text is
+    // selected, in which case the browser's copy must keep working
+    if (e.key === 'c' && e.ctrlKey && !e.shiftKey && !e.altKey && !e.metaKey) {
+      if (input.selectionStart === input.selectionEnd) {
+        e.preventDefault();
+        input.value = '';
+        comp = null;
+        sizeInput();
+        flash('^C');
+      }
+      return;
+    }
+    if (e.key === 'Tab') { e.preventDefault(); handleTab(); return; }
+    if (e.key !== 'Enter' || !input) return;
+    e.preventDefault();
+    comp = null; clearMsg();
+    run(input.value);
+    input.value = '';
+    sizeInput();
+  });
+
+  // Keep the terminal "always listening": typing anywhere on the page routes
+  // straight into the prompt, so a visitor never has to click it first. We don't
+  // hijack browser/OS shortcuts, real form fields, or activating links/buttons.
+  document.addEventListener('keydown', (e) => {
+    if (!input || e.ctrlKey || e.metaKey || e.altKey) return;
+    const ae = document.activeElement as HTMLElement | null;
+    if (ae === input) return; // already typing in the terminal
+    const tag = ae?.tagName;
+    if (ae && (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || ae.isContentEditable)) return;
+
+    if (e.key === 'Enter') {
+      if (tag === 'A' || tag === 'BUTTON') return; // let Enter activate the focused control
+      e.preventDefault();
+      input.focus({ preventScroll: true });
+      return;
+    }
+    // a printable character → focus the prompt and feed it the keystroke.
+    // (lone Space is left alone so it can still page-scroll when not typing)
+    if (e.key.length === 1 && e.key !== ' ') {
+      e.preventDefault();
+      input.focus({ preventScroll: true });
+      input.value += e.key;
+      comp = null;
+      sizeInput();
+      return;
+    }
+    // Backspace while a command is half-typed should edit it, not navigate back
+    if (e.key === 'Backspace' && input.value) {
+      e.preventDefault();
+      input.focus({ preventScroll: true });
+      input.value = input.value.slice(0, -1);
+      comp = null;
+      sizeInput();
+    }
+  });
+
+  setCwd(); // reflect the current path in the prompt on load
+</script>

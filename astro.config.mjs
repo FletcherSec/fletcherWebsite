@@ -1,13 +1,20 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
-import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 
 // https://astro.build/config
 export default defineConfig({
   // TODO: replace with the real production URL before deploy
   site: 'https://jweaver.dev',
-  integrations: [mdx(), sitemap()],
+  integrations: [sitemap()],
+  // Disable the in-page Astro dev toolbar (the floating dev-only popup).
+  devToolbar: { enabled: false },
+  // Prefetch internal links on hover for instant navigation.
+  prefetch: { prefetchAll: true, defaultStrategy: 'hover' },
+  build: {
+    // inline small stylesheets to cut render-blocking requests
+    inlineStylesheets: 'auto',
+  },
   markdown: {
     shikiConfig: {
       theme: 'github-dark',

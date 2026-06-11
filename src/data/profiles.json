@@ -1,0 +1,31 @@
+{
+  "tryhackme": {
+    "handle": "fletched",
+    "url": "https://tryhackme.com/p/fletched",
+    "level": 10,
+    "points": 13012,
+    "rooms": 74,
+    "badges": 11,
+    "streak": 0,
+    "rank": "#69,444",
+    "topPercent": "Top 3%",
+    "league": "bronze",
+    "avatar": "/profiles/thm-avatar.png"
+  },
+  "hackthebox": {
+    "handle": "fletched",
+    "url": "https://app.hackthebox.com/users/1639899",
+    "level": 35,
+    "levelTitle": "Skilled",
+    "xp": 15830,
+    "streakWeeks": 6,
+    "maxStreakWeeks": 6,
+    "rankIcon": "/profiles/htb-rank.svg",
+    "userOwns": 30,
+    "systemOwns": 26,
+    "globalRanking": "#1,001",
+    "classicRank": "Script Kiddie",
+    "respects": 0
+  },
+  "scrapedAt": "2026-06-09"
+}

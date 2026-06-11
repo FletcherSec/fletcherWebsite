@@ -1,0 +1,74 @@
+---
+import { profile, socials } from '../data/site';
+import { icons } from '../data/icons';
+
+const links = [
+  { key: 'email', label: 'email', handle: profile.email, href: `mailto:${profile.email}` },
+  { key: 'github', label: 'github', handle: '@FletcherSec', href: socials.github },
+  { key: 'hackthebox', label: 'hack the box', handle: 'fletcher', href: socials.hackthebox },
+  { key: 'tryhackme', label: 'tryhackme', handle: '@fletched', href: socials.tryhackme },
+  { key: 'linkedin', label: 'linkedin', handle: profile.name, href: socials.linkedin },
+];
+---
+<section id="about">
+  <div class="container">
+    <div class="about">
+      <div class="about-bio">
+        <div class="section-head">
+          <span class="tick">06.</span>
+          <h2>about &amp; contact</h2>
+          <span class="section-sub">/ who's behind the prompt</span>
+        </div>
+        <p>
+          Security enthusiast who goes by the handle
+          <b class="accent">fletcher</b>.
+        </p>
+        <p>{profile.bio}</p>
+        <p class="about-meta">
+          <span class="prompt">$</span> {profile.role} · {profile.location}
+        </p>
+      </div>
+      <div class="about-links">
+        {links.map((l) => (
+          <a
+            href={l.href}
+            class="social"
+            target={l.key === 'email' ? undefined : '_blank'}
+            rel={l.key === 'email' ? undefined : 'noopener'}
+          >
+            <span class="social-ico" set:html={icons[l.key]} />
+            <span class="social-text">
+              <span class="social-label">{l.label}</span>
+              <span class="social-handle">{l.handle}</span>
+            </span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .about-bio p { color: var(--fg-dim); }
+  .about-meta { font-family: var(--font-mono); font-size: 0.85rem; margin-top: 1.2rem; }
+  .about-meta .prompt { color: var(--accent); }
+
+  /* the heading now lives in the left column, so the links start flush with it */
+  .about-links { display: flex; flex-direction: column; gap: 0.55rem; align-self: start; }
+  .social {
+    display: flex; align-items: center; gap: 0.85rem;
+    padding: 0.65rem 0.85rem; border-radius: var(--radius);
+    border: 1px solid var(--border); background: var(--bg-card); color: var(--fg);
+    transition: border-color var(--speed), background var(--speed), transform var(--speed);
+  }
+  .social:hover {
+    text-decoration: none; transform: translateX(3px);
+    border-color: var(--accent); background: var(--accent-soft);
+  }
+  .social-ico { color: var(--accent); flex: none; }
+  .social-ico :global(svg) { width: 22px; height: 22px; display: block; }
+  .social-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; }
+  .social-label { font-family: var(--font-mono); font-size: 0.7rem; color: var(--fg-dim); text-transform: uppercase; letter-spacing: 1px; }
+  .social-handle { font-size: 0.92rem; color: var(--fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .social:hover .social-ico { color: var(--accent); }
+</style>

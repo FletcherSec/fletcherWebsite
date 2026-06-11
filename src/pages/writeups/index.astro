@@ -1,0 +1,31 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Nav from '../../components/Nav.astro';
+import WriteupsGallery from '../../components/WriteupsGallery.astro';
+import Footer from '../../components/Footer.astro';
+
+const writeups = (await getCollection('writeups')).filter((w) => !w.data.draft);
+---
+<BaseLayout
+  title="writeups · fletcher"
+  description="The full archive of HTB machine writeups by fletcher — searchable and filterable by OS, difficulty, and technique."
+>
+  <Nav />
+  <header class="hero container archive-hero">
+    <div class="hero-prompt">┌─[ <span class="accent">visitor</span>@fletcher ]─[ ~/writeups ]</div>
+    <div class="hero-prompt">└─$ ls -la</div>
+    <h1 class="hero-handle">~/writeups</h1>
+    <p class="hero-tag">Every box I've rooted — searchable, filterable, fully documented.</p>
+  </header>
+
+  <WriteupsGallery writeups={writeups} sticky={true} pageSize={24} tick="" heading="all writeups" />
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  /* tighter hero than the homepage: this is an archive header, not a landing */
+  .archive-hero { padding-bottom: 1.5rem; }
+  .archive-hero .hero-handle { font-size: clamp(2rem, 7vw, 3.6rem); }
+</style>

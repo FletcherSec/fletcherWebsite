@@ -1,0 +1,148 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+import MachineAvatar from '../../components/MachineAvatar.astro';
+import { machineAvatars } from '../../data/machineAvatars';
+
+export async function getStaticPaths() {
+  const writeups = await getCollection('writeups');
+  return writeups.map((entry) => ({ params: { id: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { Content, headings } = await render(entry);
+// side index ("jump list") — milestones are ## , sub-steps ###
+const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
+const d = entry.data;
+const date = d.date.toISOString().slice(0, 10);
+---
+<BaseLayout title={`${d.machine} · fletcher`} description={d.summary}>
+  <Nav />
+  <article class="wu container">
+    <a class="back" href="/writeups">← all writeups</a>
+
+    <header class="wu-head">
+      <div class="wu-head-top">
+        <MachineAvatar machine={d.machine} avatar={d.avatar ?? machineAvatars[entry.id]} size={52} />
+        <h1>{d.machine}</h1>
+        <span class={`badge cat-${d.category}`}>{d.category}</span>
+        {d.os && d.os !== d.category && <span class={`badge cat-${d.os}`}>{d.os}</span>}
+        <span class={`badge d-${d.difficulty}`}>{d.difficulty}</span>
+        {d.points && <span class="badge pts">{d.points} pts</span>}
+      </div>
+      <p class="wu-head-sub">{d.platform} · {d.status} · {date}</p>
+      <p class="wu-head-summary"><span class="lbl">Summary:</span> {d.summary}</p>
+      <div class={`wu-tags cat-${d.category}`}>{d.tags.map((t) => <span class="tag">{t}</span>)}</div>
+    </header>
+
+    <div class="wu-body">
+      {toc.length > 1 && (
+        <aside class="toc">
+          <div class="toc-title">// index</div>
+          <nav>
+            <ul>
+              {toc.map((h) => (
+                <li class={`toc-d${h.depth}`}>
+                  <a href={`#${h.slug}`} data-toc={h.slug}>{h.text}</a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </aside>
+      )}
+      <div class="prose">
+        <Content />
+      </div>
+    </div>
+  </article>
+  <Footer />
+</BaseLayout>
+
+<style>
+  .wu { --wu-w: 1040px; --toc-w: 160px; padding-top: 2.5rem; width: min(var(--wu-w), 92vw); margin-inline: auto; max-width: none; }
+  .back { font-family: var(--font-mono); font-size: 0.85rem; color: var(--fg-dim); }
+  .wu-head { padding: 1.5rem 0 1.2rem; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; }
+  .wu-head-top { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
+  .wu-head-top h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); margin: 0; color: var(--fg); }
+  .pts { color: var(--accent); }
+  .wu-head-sub { color: var(--fg-dim); font-family: var(--font-mono); font-size: 0.82rem; margin: 0.6rem 0 0.4rem; }
+  .wu-head-summary { color: #c2c7d1; margin: 0.4rem 0 0.9rem; max-width: 75ch; font-size: 1.02rem; }
+  .wu-head-summary .lbl { color: var(--accent); font-family: var(--font-mono); font-weight: 700; margin-right: 0.4ch; }
+
+  /* content is a single centered column; the index floats in the left gutter */
+  .wu-body { display: block; }
+
+  .toc { font-family: var(--font-mono); margin-bottom: 1.6rem; }
+  .toc-title { color: var(--fg-dim); font-size: 0.72rem; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 0.6rem; }
+  .toc ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.15rem; }
+  .toc-d3 a { padding-left: 1rem; font-size: 0.78rem; opacity: 0.85; }
+  .toc a {
+    display: block; padding: 0.25rem 0.6rem; border-left: 2px solid var(--border);
+    color: var(--fg-dim); font-size: 0.83rem; transition: all var(--speed);
+  }
+  .toc a:hover { color: var(--fg); border-left-color: var(--accent); text-decoration: none; }
+  .toc a.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-soft); }
+
+  /* wide screens: pin the index in the left gutter so the writeup stays centered
+     and never shares its width with the index */
+  @media (min-width: 1420px) {
+    .toc {
+      /* column left edge minus the index width and a 28px gap */
+      position: fixed; top: 96px; width: var(--toc-w);
+      left: calc(50vw - var(--wu-w) / 2 - var(--toc-w) - 28px);
+      margin: 0; max-height: calc(100vh - 130px); overflow-y: auto;
+    }
+  }
+
+  /* readable body: brighter than --fg-dim, larger, roomier line height */
+  .prose { color: #cdd2db; line-height: 1.85; font-size: 1.06rem; }
+  .prose :global(h2) {
+    margin-top: 2.4rem; color: var(--accent); font-size: 1.5rem;
+    padding-top: 0.5rem; border-top: 1px solid var(--border);
+  }
+  .prose :global(h3) { margin-top: 1.6rem; color: var(--fg); font-size: 1.18rem; }
+  .prose :global(p) { margin: 0.95rem 0; }
+  .prose :global(a) { color: var(--accent); overflow-wrap: anywhere; /* bare reference URLs wrap instead of widening the page */ }
+  .prose :global(img) {
+    display: block; max-width: 100%; height: auto; margin: 1rem 0;
+    border: 1px solid var(--border); border-radius: var(--radius);
+  }
+  .prose :global(ul), .prose :global(ol) { padding-left: 1.3rem; }
+  .prose :global(li) { margin: 0.3rem 0; }
+  .prose :global(code) {
+    font-family: var(--font-mono); font-size: 0.88em;
+    background: var(--bg-elev); padding: 0.12em 0.4em; border-radius: 4px; color: var(--accent);
+    overflow-wrap: anywhere; /* long hashes/commands must wrap, not widen the page */
+  }
+  .prose :global(pre) {
+    padding: 1.1rem 1.2rem; border-radius: var(--radius); overflow-x: auto;
+    border: 1px solid var(--border); font-size: 0.92rem; line-height: 1.6;
+  }
+  .prose :global(pre code) { background: transparent; padding: 0; color: inherit; }
+</style>
+
+<script>
+  // scrollspy: highlight the side-index entry for the section in view (0xdf-style)
+  const links = new Map<string, HTMLElement>();
+  document.querySelectorAll<HTMLElement>('.toc a[data-toc]').forEach((a) => {
+    const id = a.getAttribute('data-toc');
+    if (id) links.set(id, a);
+  });
+  const heads = document.querySelectorAll<HTMLElement>('.prose h2[id], .prose h3[id]');
+  if (heads.length && links.size) {
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            links.forEach((l) => l.classList.remove('active'));
+            links.get((e.target as HTMLElement).id)?.classList.add('active');
+          }
+        });
+      },
+      { rootMargin: '-72px 0px -70% 0px', threshold: 0 },
+    );
+    heads.forEach((h) => obs.observe(h));
+  }
+</script>

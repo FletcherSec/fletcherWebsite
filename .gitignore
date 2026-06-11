@@ -1,5 +1,11 @@
 # build output
 dist/
+# local preview screenshots (dev scratch)
+.preview-shots/
+# raw writeup originals staged for enrichment (working space)
+writeups-inbox/
+# personal HTB study vault (course notes, Academy PDFs) — never publish
+HTB/
 # generated types
 .astro/
 # deps
@@ -17,3 +23,7 @@ pnpm-debug.log*
 # jetbrains / vscode
 .idea/
 .vscode/
+# claude code local permission grants (machine-specific)
+.claude/settings.local.json
+# raw obsidian media dump (staging); served copies live in public/media/
+media/

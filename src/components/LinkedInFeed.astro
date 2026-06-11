@@ -1,0 +1,65 @@
+---
+import { linkedinPosts, postTags } from '../data/site';
+import feed from '../data/linkedin.json';
+
+// Live posts come from `npm run scrape:linkedin` (src/data/linkedin.json);
+// the hand-maintained list in site.ts is the fallback until a scrape succeeds.
+// Tags are matched by the activity id in the URL (see postTags in site.ts).
+// The scraper caps blurbs at ~240 chars; anything near the cap was cut from a
+// longer post, so close it with an ellipsis instead of stopping mid-sentence.
+const TRUNCATED_AT = 200;
+const posts = (feed.posts?.length ? feed.posts : linkedinPosts).slice(0, 3).map((p) => ({
+  ...p,
+  text: p.text.length >= TRUNCATED_AT && !/(…|\.\.\.)$/.test(p.text) ? p.text.replace(/\s*$/, '') + '…' : p.text,
+  tags: postTags[p.url.match(/(\d+)\/?$/)?.[1] ?? ''] ?? [],
+}));
+---
+<section id="activity">
+  <div class="container">
+    <div class="section-head">
+      <span class="tick">05.</span>
+      <h2>activity</h2>
+      <span class="section-sub">/ latest from LinkedIn</span>
+    </div>
+
+    <div class="feed">
+      {posts.map((p) => (
+        <a class="post" href={p.url} target="_blank" rel="noopener">
+          <span class="post-date">[{p.date}]</span>
+          <span class="post-text">{p.text}</span>
+          <span class="post-foot">
+            <span class="post-link">└─ read on linkedin</span>
+            {p.tags.length > 0 && (
+              <span class="post-tags">{p.tags.map((t) => <span class="tag">{t}</span>)}</span>
+            )}
+          </span>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .feed { display: flex; flex-direction: column; gap: 0.7rem; font-family: var(--font-mono); }
+  .post {
+    display: block; padding: 0.9rem 1.1rem;
+    border: 1px solid var(--border); border-left: 2px solid var(--border);
+    border-radius: var(--radius); background: var(--bg-card); color: var(--fg);
+    transition: border-color var(--speed), background var(--speed);
+  }
+  .post:hover {
+    text-decoration: none;
+    border-color: var(--accent); border-left-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .post-date { color: var(--accent-2); font-size: 0.78rem; }
+  .post-text { display: block; margin-top: 0.3rem; color: var(--fg); font-size: 0.92rem; line-height: 1.6; }
+  .post-foot {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 0.7rem; margin-top: 0.45rem; flex-wrap: wrap;
+  }
+  .post-link { color: var(--fg-dim); font-size: 0.76rem; }
+  .post:hover .post-link { color: var(--accent); }
+  .post-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; color: var(--accent-2); }
+  .post-tags .tag::before { content: none; } /* plain pills here — no '#' prefix */
+</style>

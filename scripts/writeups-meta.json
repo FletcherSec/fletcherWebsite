@@ -1,0 +1,125 @@
+{
+  "active": {
+    "machine": "Active", "category": "AD", "os": "Windows", "difficulty": "Easy", "points": 20,
+    "tags": ["gpp-cpassword", "kerberoasting", "smb", "active-directory", "ldap"],
+    "date": "2026-05-04",
+    "summary": "Anonymous SMB read on the Replication share exposes a GPP-encrypted password; gpp-decrypt recovers SVC_TGS, and Kerberoasting the Administrator SPN cracks offline to full domain compromise."
+  },
+  "administrator": {
+    "machine": "Administrator", "category": "AD", "os": "Windows", "difficulty": "Medium", "points": 30,
+    "tags": ["bloodhound", "acl-abuse", "password-reset", "dcsync", "kerberoasting", "psql"],
+    "summary": ""
+  },
+  "blackfield": {
+    "machine": "Blackfield", "category": "AD", "os": "Windows", "difficulty": "Hard", "points": 40,
+    "tags": ["as-rep-roasting", "bloodhound", "smb", "forcechangepassword", "sebackupprivilege", "lsass"],
+    "summary": ""
+  },
+  "cicada": {
+    "machine": "Cicada", "category": "AD", "os": "Windows", "difficulty": "Easy", "points": 20,
+    "tags": ["smb", "password-spray", "ldap", "sebackupprivilege", "rid-cycling"],
+    "summary": ""
+  },
+  "forest": {
+    "machine": "Forest", "category": "AD", "os": "Windows", "difficulty": "Easy", "points": 20,
+    "tags": ["as-rep-roasting", "kerberoasting", "bloodhound", "dcsync", "acl-abuse"],
+    "summary": ""
+  },
+  "return": {
+    "machine": "Return", "category": "AD", "os": "Windows", "difficulty": "Easy", "points": 20,
+    "tags": ["ldap-relay", "printer-creds", "server-operators", "winrm", "privilege-escalation"],
+    "summary": ""
+  },
+  "sauna": {
+    "machine": "Sauna", "category": "AD", "os": "Windows", "difficulty": "Easy", "points": 20,
+    "tags": ["as-rep-roasting", "bloodhound", "kerberoasting", "autologon-creds", "dcsync"],
+    "summary": ""
+  },
+  "access": {
+    "machine": "Access", "category": "Windows", "difficulty": "Easy", "points": 20,
+    "tags": ["ftp", "mdb-access", "pst-crack", "runas", "dpapi"],
+    "summary": ""
+  },
+  "arctic": {
+    "machine": "Arctic", "category": "Windows", "difficulty": "Easy", "points": 20,
+    "tags": ["coldfusion", "cve-2009-2265", "jsp-shell", "churrasco"],
+    "summary": ""
+  },
+  "chatterbox": {
+    "machine": "Chatterbox", "category": "Windows", "difficulty": "Medium", "points": 30,
+    "tags": ["achat", "buffer-overflow", "seimpersonate", "registry-creds"],
+    "summary": ""
+  },
+  "heist": {
+    "machine": "Heist", "category": "Windows", "difficulty": "Easy", "points": 20,
+    "tags": ["cisco-type7", "smb", "rpc-enum", "winrm", "firefox-procdump"],
+    "summary": ""
+  },
+  "jeeves": {
+    "machine": "Jeeves", "category": "Windows", "difficulty": "Medium", "points": 30,
+    "tags": ["jenkins", "groovy-rce", "keepass", "kdbx-crack", "alternate-data-streams"],
+    "summary": ""
+  },
+  "jerry": {
+    "machine": "Jerry", "category": "Windows", "difficulty": "Easy", "points": 20,
+    "tags": ["tomcat", "war-upload", "default-creds", "msfvenom", "reverse-shell"],
+    "date": "2026-05-06",
+    "summary": "Apache Tomcat's Web Application Manager accepts the default tomcat:s3cret login; uploading a malicious reverse-shell WAR lands a shell with direct access to both flags."
+  },
+  "love": {
+    "machine": "Love", "category": "Windows", "difficulty": "Easy", "points": 20,
+    "tags": ["ssrf", "voting-system", "file-upload", "alwaysinstallelevated"],
+    "summary": ""
+  },
+  "netmon": {
+    "machine": "Netmon", "category": "Windows", "difficulty": "Easy", "points": 20,
+    "tags": ["prtg", "anonymous-ftp", "cve-2018-9276", "default-creds"],
+    "summary": ""
+  },
+  "querier": {
+    "machine": "Querier", "category": "Windows", "difficulty": "Medium", "points": 30,
+    "tags": ["xlsm-macro", "mssql", "responder-ntlm", "xp-cmdshell", "powerup-gpp"],
+    "summary": ""
+  },
+  "remote": {
+    "machine": "Remote", "category": "Windows", "difficulty": "Easy", "points": 20,
+    "tags": ["nfs", "umbraco", "cve-2019-7214", "teamviewer-creds"],
+    "summary": ""
+  },
+  "secnotes": {
+    "machine": "SecNotes", "category": "Windows", "difficulty": "Medium", "points": 30,
+    "tags": ["csrf", "sql-injection", "smb-upload", "php-webshell", "wsl-bash-history"],
+    "summary": ""
+  },
+  "servmon": {
+    "machine": "ServMon", "category": "Windows", "difficulty": "Easy", "points": 20,
+    "tags": ["nvms-1000", "lfi", "anonymous-ftp", "nsclient", "ssh-tunnel"],
+    "summary": ""
+  },
+  "keeper": {
+    "machine": "Keeper", "category": "Linux", "difficulty": "Easy", "points": 20,
+    "tags": ["default-credentials", "request-tracker", "keepass", "cve-2023-32784", "putty-key"],
+    "summary": ""
+  },
+  "nibbles": {
+    "machine": "Nibbles", "category": "Linux", "difficulty": "Easy", "points": 20,
+    "tags": ["nibbleblog", "cve-2015-6967", "file-upload", "default-creds", "sudo", "privilege-escalation"],
+    "date": "2026-05-18",
+    "summary": "A commented-out /nibbleblog/ path leads to an admin panel with a guessable password, where CVE-2015-6967 in the my_image plugin gives a shell as nibbler, then a writable root NOPASSWD monitor.sh escalates to root."
+  },
+  "pilgrimage": {
+    "machine": "Pilgrimage", "category": "Linux", "difficulty": "Easy", "points": 20,
+    "tags": ["exposed-git", "imagemagick", "cve-2022-44268", "binwalk", "cve-2022-4510"],
+    "summary": ""
+  },
+  "poison": {
+    "machine": "Poison", "category": "Linux", "os": "Other", "difficulty": "Medium", "points": 30,
+    "tags": ["lfi", "log-poisoning", "vnc", "ssh-tunneling", "encrypted-archive"],
+    "summary": ""
+  },
+  "solidstate": {
+    "machine": "SolidState", "category": "Linux", "difficulty": "Medium", "points": 30,
+    "tags": ["apache-james", "default-credentials", "cve-2015-7611", "smtp", "restricted-shell-escape", "cron-abuse"],
+    "summary": ""
+  }
+}

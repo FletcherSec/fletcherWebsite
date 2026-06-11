@@ -1,0 +1,44 @@
+---
+import '../styles/base.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+const {
+  title = 'Fletcher',
+  description = 'HTB writeups, projects, and certs from fletcher — cybersecurity grad student and CTF player.',
+} = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta name="theme-color" content="#0b0c0e" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%230b0c0e'/%3E%3Ctext x='1.5' y='11.5' font-family='monospace' font-size='9' font-weight='bold' fill='%232ee36a'%3E%3E_%3C/text%3E%3C/svg%3E" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta name="twitter:card" content="summary" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="shell">
+      <slot />
+    </div>
+  </body>
+</html>

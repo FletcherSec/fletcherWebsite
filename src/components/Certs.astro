@@ -1,0 +1,61 @@
+---
+import { certs } from '../data/site';
+import { icons } from '../data/icons';
+---
+<section id="certs">
+  <div class="container">
+    <div class="section-head">
+      <span class="tick">04.</span>
+      <h2>certifications</h2>
+      <span class="section-sub">/ paper to back the practice</span>
+    </div>
+    <div class="cert-grid">
+      {certs.map((c) => (
+        <article class="cert-card">
+          {c.icon
+            ? <img class="cert-img" src={c.icon} width="56" height="56" alt={`${c.name} badge`} loading="lazy" />
+            : <div class="cert-badge">{c.abbr}</div>}
+          <div class="cert-body">
+            <h3>{c.name}</h3>
+            <div class="issuer">{c.issuer} · {c.date}</div>
+            <p>{c.blurb}</p>
+            {c.url && (
+              <a class="cert-verify" href={c.url} target="_blank" rel="noopener">
+                <span class="cv-ico" set:html={icons.verified} />verify credential
+              </a>
+            )}
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .cert-img { flex: none; width: 56px; height: 56px; object-fit: contain; display: block; align-self: flex-start; }
+
+  /* stretch each card's content so the verify chip can pin to the bottom,
+     keeping all chips on the same line regardless of blurb length */
+  .cert-card { align-items: stretch; }
+  .cert-body { display: flex; flex-direction: column; min-width: 0; }
+  /* guarantee a little breathing room between the blurb and the verify chip,
+     even on the tallest card where the chip pins straight to the bottom */
+  .cert-body p { margin-bottom: 0.9rem; }
+
+  /* unified, professional "verify credential" chip */
+  .cert-verify {
+    align-self: flex-start;
+    display: inline-flex; align-items: center; gap: 0.45rem;
+    margin-top: auto; padding: 0.3rem 0.75rem;
+    font-family: var(--font-mono); font-size: 0.74rem; font-weight: 700;
+    letter-spacing: 0.3px; color: var(--fg-dim);
+    border: 1px solid var(--border); border-radius: 999px;
+    transition: color var(--speed), border-color var(--speed), background var(--speed);
+  }
+  .cert-verify:hover {
+    text-decoration: none; color: var(--accent);
+    border-color: var(--accent); background: var(--accent-soft);
+  }
+  .cv-ico { display: inline-flex; flex: none; }
+  .cv-ico :global(svg) { width: 13px; height: 13px; display: block; }
+</style>

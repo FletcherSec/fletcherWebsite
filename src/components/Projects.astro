@@ -1,0 +1,45 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  projects: CollectionEntry<'projects'>[];
+}
+const { projects } = Astro.props;
+const items = [...projects].sort((a, b) => +b.data.date - +a.data.date);
+---
+<section id="projects">
+  <div class="container">
+    <div class="section-head">
+      <span class="tick">03.</span>
+      <h2>projects</h2>
+      <span class="section-sub">/ tooling I build when a workflow gets repetitive</span>
+    </div>
+    <div class="proj-grid">
+      {items.map((p) => (
+        <a class="proj-card" href={p.data.demo ?? p.data.github} target="_blank" rel="noopener">
+          <div class="proj-head">
+            <h3>{p.data.title}</h3>
+            {typeof p.data.stars === 'number' && p.data.stars > 0 && (
+              <span class="proj-stars" title={`${p.data.stars} GitHub stars`}>★ {p.data.stars}</span>
+            )}
+          </div>
+          <p>{p.data.description}</p>
+          <div class="proj-tech">{p.data.tech.map((t) => <span>{t}</span>)}</div>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  /* the whole card is the link now */
+  .proj-card { color: inherit; }
+  .proj-card:hover { text-decoration: none; }
+  .proj-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem; }
+  .proj-head h3 { margin: 0; }
+  .proj-stars {
+    flex: none; font-family: var(--font-mono); font-size: 0.78rem; font-weight: 700;
+    color: var(--c-linux); /* amber star, like a GitHub stargazer count */
+  }
+  .proj-card p { margin-bottom: 0.3rem; }
+</style>
