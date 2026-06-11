@@ -21,18 +21,32 @@ fi
 chmod 600 "$KEY"
 
 cat > /etc/nginx/sites-available/$DOMAIN <<EOF
-# fletched.me — static Astro site behind Cloudflare (Full strict)
+# fletched.me — static Astro site behind Cloudflare (Full strict).
+# Canonical host is the bare apex; HTTP and www both 301 to https://$DOMAIN.
+
+# any HTTP (apex or www) -> https apex
 server {
     listen 80;
     server_name $DOMAIN www.$DOMAIN;
-    return 301 https://\$host\$request_uri;
+    return 301 https://$DOMAIN\$request_uri;
 }
 
+# https www -> https apex
+server {
+    listen 443 ssl http2;
+    server_name www.$DOMAIN;
+    ssl_certificate     $CERT;
+    ssl_certificate_key $KEY;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    return 301 https://$DOMAIN\$request_uri;
+}
+
+# https apex -> serve the site
 server {
     # combined listen syntax: Ubuntu 24.04 ships nginx 1.24, which predates
     # the standalone "http2 on;" directive (1.25.1+)
     listen 443 ssl http2;
-    server_name $DOMAIN www.$DOMAIN;
+    server_name $DOMAIN;
 
     ssl_certificate     $CERT;
     ssl_certificate_key $KEY;
