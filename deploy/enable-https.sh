@@ -29,8 +29,9 @@ server {
 }
 
 server {
-    listen 443 ssl;
-    http2 on;
+    # combined listen syntax: Ubuntu 24.04 ships nginx 1.24, which predates
+    # the standalone "http2 on;" directive (1.25.1+)
+    listen 443 ssl http2;
     server_name $DOMAIN www.$DOMAIN;
 
     ssl_certificate     $CERT;
