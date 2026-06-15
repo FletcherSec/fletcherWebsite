@@ -17,15 +17,15 @@
     "url": "https://app.hackthebox.com/users/1639899",
     "level": 35,
     "levelTitle": "Skilled",
-    "xp": 15830,
-    "streakWeeks": 6,
-    "maxStreakWeeks": 6,
+    "xp": 16415,
+    "streakWeeks": 7,
+    "maxStreakWeeks": 7,
     "rankIcon": "/profiles/htb-rank.svg",
-    "userOwns": 30,
-    "systemOwns": 26,
-    "globalRanking": "#1,001",
+    "userOwns": 31,
+    "systemOwns": 27,
+    "globalRanking": "#1,010",
     "classicRank": "Script Kiddie",
     "respects": 0
   },
-  "scrapedAt": "2026-06-09"
+  "scrapedAt": "2026-06-15"
 }
