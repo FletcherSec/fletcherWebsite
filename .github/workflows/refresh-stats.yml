@@ -1,0 +1,73 @@
+name: Refresh stats (HTB / THM)
+
+# Daily cron that re-scrapes the TryHackMe + Hack The Box profiles, commits the
+# refreshed src/data/profiles.json back to the repo, then rebuilds and deploys.
+# (A push made with the default GITHUB_TOKEN does NOT trigger deploy.yml, so we
+# build + rsync inline here rather than relying on the push event.)
+on:
+  schedule:
+    # 07:17 UTC daily — off the top of the hour to dodge GitHub's cron congestion
+    - cron: '17 7 * * *'
+  # let you run it on demand from the Actions tab
+  workflow_dispatch:
+
+# share the deploy lock with deploy.yml so a stats refresh and a code push
+# never rsync to the box at the same time
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: write # to commit the refreshed data file back to main
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Scrape HTB + THM profiles
+        env:
+          # HTB App Token (Settings > App Tokens) enriches the HTB card with
+          # machine owns + global ranking. Optional: without it the scraper
+          # keeps the last-known values for those fields.
+          HTB_TOKEN: ${{ secrets.HTB_TOKEN }}
+        run: npm run scrape
+
+      - name: Commit refreshed data (if changed)
+        run: |
+          git config user.name  "stats-bot"
+          git config user.email "actions@github.com"
+          git add src/data/profiles.json public/profiles
+          if git diff --cached --quiet; then
+            echo "No stat changes today."
+          else
+            git commit -m "chore: refresh HTB/THM stats [skip ci]"
+            git push
+          fi
+
+      - name: Build
+        run: npm run build
+
+      - name: Sync dist/ to the server
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            dist/ "deploy@${{ secrets.DEPLOY_HOST }}:/var/www/fletched.me/"

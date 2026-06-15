@@ -177,10 +177,15 @@ async function main() {
   await browser.close();
 
   const prev = existsSync(OUT) ? JSON.parse(readFileSync(OUT, 'utf8')) : {};
+  // Merge new-over-old per field so a partial scrape never wipes good data:
+  // a run without HTB_TOKEN (no machine owns / global ranking) keeps the last
+  // known values for those fields instead of dropping them. A scrape that came
+  // back empty (<=2 keys = just handle/url) falls back to the previous snapshot.
+  const merge = (next, last) =>
+    next && Object.keys(next).length > 2 ? { ...last, ...next } : last;
   const out = {
-    // keep last-known-good if a scrape came back empty this run
-    tryhackme: thm && Object.keys(thm).length > 2 ? thm : prev.tryhackme,
-    hackthebox: htb && Object.keys(htb).length > 2 ? htb : prev.hackthebox,
+    tryhackme: merge(thm, prev.tryhackme),
+    hackthebox: merge(htb, prev.hackthebox),
     scrapedAt: new Date().toISOString().slice(0, 10),
   };
   writeFileSync(OUT, JSON.stringify(out, null, 2) + '\n');
