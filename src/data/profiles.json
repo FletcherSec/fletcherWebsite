@@ -13,7 +13,7 @@
     "avatar": "/profiles/thm-avatar.png"
   },
   "hackthebox": {
-    "handle": "fletched",
+    "handle": "fletcher",
     "url": "https://app.hackthebox.com/users/1639899",
     "level": 35,
     "levelTitle": "Skilled",
@@ -27,5 +27,5 @@
     "classicRank": "Script Kiddie",
     "respects": 0
   },
-  "scrapedAt": "2026-06-15"
+  "scrapedAt": "2026-06-16"
 }
