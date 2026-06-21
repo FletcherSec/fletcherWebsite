@@ -15,11 +15,11 @@
   "hackthebox": {
     "handle": "fletcher",
     "url": "https://app.hackthebox.com/users/1639899",
-    "level": 35,
+    "level": 36,
     "levelTitle": "Skilled",
-    "xp": 16415,
-    "streakWeeks": 7,
-    "maxStreakWeeks": 7,
+    "xp": 16805,
+    "streakWeeks": 8,
+    "maxStreakWeeks": 8,
     "rankIcon": "/profiles/htb-rank.svg",
     "userOwns": 31,
     "systemOwns": 27,
@@ -27,5 +27,5 @@
     "classicRank": "Script Kiddie",
     "respects": 0
   },
-  "scrapedAt": "2026-06-20"
+  "scrapedAt": "2026-06-21"
 }
