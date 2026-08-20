@@ -16,8 +16,14 @@ import profiles from '../data/profiles.json';
 const writeups = (await getCollection('writeups')).filter((w) => !w.data.draft);
 const projects = await getCollection('projects');
 
-// "rooms completed" = HTB machines rooted + rooms completed on TryHackMe
-const roomsCompleted = (profiles.hackthebox?.systemOwns ?? 0) + (profiles.tryhackme?.rooms ?? 0);
+// "rooms completed" = HTB machines rooted + TryHackMe rooms + Proving Grounds writeups.
+// HTB/THM come from profiles.json (scripts/scrape-profiles.mjs) — refreshed daily by
+// .github/workflows/refresh-stats.yml, which also rebuilds+redeploys every run, so this
+// stays current even on days the scrape itself doesn't change. PG has no public stats API,
+// so its count is the number of published PG writeups — this recomputes on every build,
+// which the same daily workflow triggers, so it's checked daily like the other two.
+const pgWriteups = writeups.filter((w) => w.data.platform === 'Proving Grounds').length;
+const roomsCompleted = (profiles.hackthebox?.systemOwns ?? 0) + (profiles.tryhackme?.rooms ?? 0) + pgWriteups;
 ---
 <BaseLayout>
   <Nav />

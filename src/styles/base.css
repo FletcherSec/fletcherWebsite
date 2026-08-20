@@ -37,6 +37,12 @@
   --d-hard: #ff6b5e;
   --d-insane: #ff3d6e;
 
+  /* platform accents — keeps HTB and Proving Grounds visually distinct in the
+     archive (separate filter lane + tinted platform label) without touching
+     the difficulty/category colors, which stay universal across platforms */
+  --c-htb: #2ee36a;
+  --c-pg: #fb923c;
+
   --grid-bg:
     linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px) 0 0 / 100% 30px,
     linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px) 0 0 / 30px 100%;
@@ -177,6 +183,13 @@ section, header[id], [id] { scroll-margin-top: 72px; }
 .chip[aria-pressed='true'][data-diff='Medium'] { background: var(--d-medium);  border-color: var(--d-medium);  color: var(--bg); }
 .chip[aria-pressed='true'][data-diff='Hard']   { background: var(--d-hard);    border-color: var(--d-hard);    color: var(--bg); }
 .chip[aria-pressed='true'][data-diff='Insane'] { background: var(--d-insane);  border-color: var(--d-insane);  color: var(--bg); }
+.chip[data-plat='HTB'] { color: var(--c-htb); }
+.chip[data-plat='PG']  { color: var(--c-pg); }
+.chip[data-plat='HTB'], .chip[data-plat='PG'] {
+  border-color: color-mix(in srgb, currentColor 40%, transparent);
+}
+.chip[aria-pressed='true'][data-plat='HTB'] { background: var(--c-htb); border-color: var(--c-htb); color: var(--bg); }
+.chip[aria-pressed='true'][data-plat='PG']  { background: var(--c-pg);  border-color: var(--c-pg);  color: var(--bg); }
 .select {
   padding: 0.45rem 0.7rem; border-radius: var(--radius);
   background: var(--bg-elev); border: 1px solid var(--border);
@@ -189,6 +202,47 @@ section, header[id], [id] { scroll-margin-top: 72px; }
   backdrop-filter: blur(8px);
 }
 .wu-count { color: var(--fg-dim); font-family: var(--font-mono); font-size: 0.76rem; margin-left: auto; }
+
+/* collapsible filter panel — keeps the default view down to search + one
+   toggle instead of every platform/os/difficulty option always on screen. */
+.filters-toggle {
+  display: inline-flex; align-items: baseline; gap: 0.4ch;
+  padding: 0.45rem 0.8rem; border-radius: var(--radius);
+  background: var(--bg-elev); border: 1px solid var(--border);
+  color: var(--fg-dim); font-family: var(--font-mono); font-size: 0.82rem;
+  cursor: pointer; transition: border-color var(--speed), color var(--speed);
+}
+.filters-toggle:hover { color: var(--fg); border-color: currentColor; }
+.filters-toggle.has-active { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+.filters-toggle .ft-sign { color: inherit; opacity: 0.8; }
+.filters-badge { color: var(--accent); font-weight: 700; }
+
+.filter-panel {
+  display: flex; flex-direction: column; gap: 0.65rem;
+  padding: 0.9rem 1.1rem; margin: -0.7rem 0 1.4rem;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  border-left: 2px solid var(--accent);
+  background: var(--bg-elev);
+}
+.filters.sticky + .filter-panel:not([hidden]) {
+  position: sticky; top: 100px; z-index: 29;
+  background: color-mix(in srgb, var(--bg-elev) 95%, transparent);
+  backdrop-filter: blur(8px);
+}
+.filter-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
+.filter-row-label {
+  flex: 0 0 5.5em;
+  font-family: var(--font-mono); font-size: 0.78rem; color: var(--fg-dim);
+}
+.filter-row-label::after { content: ':'; }
+.filter-row .chip-group { display: contents; }
+.clear-chip {
+  align-self: flex-start; margin-top: 0.15rem;
+  background: none; border: none; padding: 0;
+  color: var(--fg-dim); font-family: var(--font-mono); font-size: 0.76rem;
+  cursor: pointer; transition: color var(--speed);
+}
+.clear-chip:hover { color: var(--danger); }
 
 /* archive: incremental reveal */
 .gallery-foot { display: flex; justify-content: center; margin-top: 1.3rem; }
@@ -231,6 +285,9 @@ section, header[id], [id] { scroll-margin-top: 72px; }
 }
 .wu-name { font-family: var(--font-head); font-size: 1rem; color: var(--fg); font-weight: 700; }
 .wu-platform { font-size: 0.72rem; color: var(--fg-dim); font-family: var(--font-mono); }
+/* platform accent — used on both the gallery card label and the writeup page subhead */
+.plat-HTB { color: var(--c-htb); }
+.plat-PG  { color: var(--c-pg); }
 .wu-meta { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; margin-left: auto; }
 /* gallery rows stay dense: hide summary + tags there only */
 .gallery .wu-summary { display: none; }

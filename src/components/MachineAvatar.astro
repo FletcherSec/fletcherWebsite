@@ -1,30 +1,46 @@
 ---
 // Machine "pfp": the official HTB avatar when we have one (frontmatter `avatar`,
-// populated by scripts/scrape-htb-avatars.mjs), else a generated initials badge.
-// Used on both the writeups gallery rows and the writeup page header so the icon
-// is identical in both places.
+// populated by scripts/scrape-htb-avatars.mjs). Proving Grounds has no
+// per-machine artwork to scrape (confirmed — the real portal only badges each
+// lab by OS, no HTB-style commissioned art exists anywhere public for PG), so
+// every PG writeup uses the same OffSec mark instead (public/platforms/offsec.png,
+// sourced directly from offsec.com's own site icon) — same transparent-PNG-on-
+// elevated-tile treatment as the real HTB avatars. Anything else without a
+// known image (a future third platform, an HTB box before its avatar is
+// scraped) falls back to a generated initials badge. Used on both the
+// writeups gallery rows and the writeup page header so the icon is identical
+// in both places.
+import { platformKey } from '../data/platform';
+
 interface Props {
   machine: string;
   avatar?: string;
   size?: number;
+  platform?: string;
 }
-const { machine, avatar, size = 34 } = Astro.props;
+const { machine, avatar, size = 34, platform } = Astro.props;
+const plat = platform ? platformKey(platform) : null;
+const resolvedAvatar = avatar ?? (plat === 'PG' ? '/platforms/offsec.png' : undefined);
 const initials = machine.replace(/[^a-z0-9]/gi, '').slice(0, 2).toUpperCase();
 const dim = `${size}px`;
 ---
-{avatar ? (
+{resolvedAvatar ? (
   <img
     class="m-avatar m-avatar--img"
-    src={avatar}
+    src={resolvedAvatar}
     width={size}
     height={size}
     style={`width:${dim};height:${dim}`}
-    alt={`${machine} avatar`}
+    alt={plat === 'PG' && !avatar ? 'Proving Grounds (OffSec)' : `${machine} avatar`}
     loading="lazy"
     decoding="async"
   />
 ) : (
-  <div class="m-avatar" aria-hidden="true" style={`width:${dim};height:${dim};font-size:${Math.round(size * 0.42)}px`}>
+  <div
+    class={`m-avatar${plat ? ` plat-${plat}` : ''}`}
+    aria-hidden="true"
+    style={`width:${dim};height:${dim};font-size:${Math.round(size * 0.42)}px`}
+  >
     {initials}
   </div>
 )}
@@ -37,6 +53,7 @@ const dim = `${size}px`;
     color: var(--bg);
     background: linear-gradient(135deg, var(--accent), var(--accent-2));
   }
+  .m-avatar.plat-HTB { background: linear-gradient(135deg, var(--c-htb), var(--accent-2)); }
   /* real avatars are transparent PNGs — keep them whole, sit them on an elevated tile */
   .m-avatar--img {
     object-fit: contain; padding: 2px;

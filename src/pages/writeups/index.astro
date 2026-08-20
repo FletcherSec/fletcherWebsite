@@ -9,12 +9,10 @@ const writeups = (await getCollection('writeups')).filter((w) => !w.data.draft);
 ---
 <BaseLayout
   title="writeups · fletcher"
-  description="The full archive of HTB machine writeups by fletcher — searchable and filterable by OS, difficulty, and technique."
+  description="The full archive of HTB & Proving Grounds writeups by fletcher — searchable and filterable by platform, OS, difficulty, and technique."
 >
   <Nav />
   <header class="hero container archive-hero">
-    <div class="hero-prompt">┌─[ <span class="accent">visitor</span>@fletcher ]─[ ~/writeups ]</div>
-    <div class="hero-prompt">└─$ ls -la</div>
     <h1 class="hero-handle">~/writeups</h1>
     <p class="hero-tag">Every box I've rooted — searchable, filterable, fully documented.</p>
   </header>

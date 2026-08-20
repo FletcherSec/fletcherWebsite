@@ -5,6 +5,7 @@ import Nav from '../../components/Nav.astro';
 import Footer from '../../components/Footer.astro';
 import MachineAvatar from '../../components/MachineAvatar.astro';
 import { machineAvatars } from '../../data/machineAvatars';
+import { platformKey } from '../../data/platform';
 
 export async function getStaticPaths() {
   const writeups = await getCollection('writeups');
@@ -25,14 +26,14 @@ const date = d.date.toISOString().slice(0, 10);
 
     <header class="wu-head">
       <div class="wu-head-top">
-        <MachineAvatar machine={d.machine} avatar={d.avatar ?? machineAvatars[entry.id]} size={52} />
+        <MachineAvatar machine={d.machine} avatar={d.avatar ?? machineAvatars[entry.id]} size={52} platform={d.platform} />
         <h1>{d.machine}</h1>
         <span class={`badge cat-${d.category}`}>{d.category}</span>
         {d.os && d.os !== d.category && <span class={`badge cat-${d.os}`}>{d.os}</span>}
         <span class={`badge d-${d.difficulty}`}>{d.difficulty}</span>
         {d.points && <span class="badge pts">{d.points} pts</span>}
       </div>
-      <p class="wu-head-sub">{d.platform} · {d.status} · {date}</p>
+      <p class="wu-head-sub"><span class={`plat-${platformKey(d.platform)}`}>{d.platform}</span> · {d.status} · {date}</p>
       <p class="wu-head-summary"><span class="lbl">Summary:</span> {d.summary}</p>
       <div class={`wu-tags cat-${d.category}`}>{d.tags.map((t) => <span class="tag">{t}</span>)}</div>
     </header>

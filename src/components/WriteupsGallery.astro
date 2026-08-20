@@ -2,6 +2,7 @@
 import type { CollectionEntry } from 'astro:content';
 import MachineAvatar from './MachineAvatar.astro';
 import { machineAvatars } from '../data/machineAvatars';
+import { platformKey } from '../data/platform';
 
 interface Props {
   writeups: CollectionEntry<'writeups'>[];
@@ -37,6 +38,19 @@ const present = new Set(sorted.map((i) => i.data.category));
 const catOptions = ['All', ...['Linux', 'Windows', 'AD', 'Other'].filter((c) => present.has(c))];
 const diffOptions = ['All', 'Easy', 'Medium', 'Hard', 'Insane'];
 
+// platform chips only show up once a second platform actually has a writeup —
+// so the archive quietly grows a "Proving Grounds" filter the day it's needed
+const presentPlatforms = new Set(sorted.map((w) => platformKey(w.data.platform)));
+const platOptions = ['All', ...['HTB', 'PG', 'Other'].filter((p) => presentPlatforms.has(p as any))];
+
+// per-platform breakdown for the archive subhead, e.g. "24 Hack The Box · 31 Proving Grounds"
+const platformCounts = new Map<string, number>();
+for (const w of sorted) platformCounts.set(w.data.platform, (platformCounts.get(w.data.platform) ?? 0) + 1);
+const platformSummary = [...platformCounts.entries()]
+  .sort((a, b) => b[1] - a[1])
+  .map(([name, count]) => `${count} ${name}`)
+  .join(' · ');
+
 const fmt = (d: Date) => d.toISOString().slice(0, 10);
 ---
 
@@ -48,29 +62,51 @@ const fmt = (d: Date) => d.toISOString().slice(0, 10);
       <span class="section-sub">
         {isTeaser
           ? `/ latest ${items.length} of ${total} — type \`cd writeups\` or open the archive`
-          : `/ ${total} HTB machines, rooted & documented`}
+          : `/ ${platformSummary} — rooted & documented`}
       </span>
     </div>
 
     {!isTeaser && (
       <div class={`filters${sticky ? ' sticky' : ''}`}>
         <input class="search" id="wu-search" type="search" placeholder="$ grep machine, tag, technique…" autocomplete="off" />
-        <div class="chip-group" data-group="cat">
-          {catOptions.map((o) => (
-            <button class="chip" data-cat={o} aria-pressed={o === 'All' ? 'true' : 'false'}>{o}</button>
-          ))}
-        </div>
-        <div class="chip-group" data-group="diff">
-          {diffOptions.map((d) => (
-            <button class="chip" data-diff={d} aria-pressed={d === 'All' ? 'true' : 'false'}>{d}</button>
-          ))}
-        </div>
+        <button class="filters-toggle" id="wu-filters-toggle" type="button" aria-expanded="false" aria-controls="wu-filter-panel">
+          filters <span class="ft-sign" id="wu-filters-sign">[+]</span><span class="filters-badge" id="wu-filters-badge" hidden></span>
+        </button>
         <select class="select" id="wu-sort" aria-label="Sort writeups">
           <option value="new">newest</option>
           <option value="diff">difficulty</option>
           <option value="az">A–Z</option>
         </select>
         <span class="wu-count" id="wu-count"></span>
+      </div>
+      <div class="filter-panel" id="wu-filter-panel" hidden>
+        {platOptions.length > 2 && (
+          <div class="filter-row">
+            <span class="filter-row-label">platform</span>
+            <div class="chip-group" data-group="plat">
+              {platOptions.map((p) => (
+                <button class="chip" data-plat={p} aria-pressed={p === 'All' ? 'true' : 'false'}>{p}</button>
+              ))}
+            </div>
+          </div>
+        )}
+        <div class="filter-row">
+          <span class="filter-row-label">os</span>
+          <div class="chip-group" data-group="cat">
+            {catOptions.map((o) => (
+              <button class="chip" data-cat={o} aria-pressed={o === 'All' ? 'true' : 'false'}>{o}</button>
+            ))}
+          </div>
+        </div>
+        <div class="filter-row">
+          <span class="filter-row-label">difficulty</span>
+          <div class="chip-group" data-group="diff">
+            {diffOptions.map((d) => (
+              <button class="chip" data-diff={d} aria-pressed={d === 'All' ? 'true' : 'false'}>{d}</button>
+            ))}
+          </div>
+        </div>
+        <button class="clear-chip" id="wu-clear" type="button">[×] clear filters</button>
       </div>
     )}
 
@@ -83,14 +119,15 @@ const fmt = (d: Date) => d.toISOString().slice(0, 10);
           data-cat={w.data.category}
           data-diff={w.data.difficulty}
           data-difforder={DIFF_ORDER[w.data.difficulty]}
+          data-plat={platformKey(w.data.platform)}
           data-date={fmt(w.data.date)}
           data-tags={w.data.tags.join(' ')}
         >
           <div class="wu-top">
-            <MachineAvatar machine={w.data.machine} avatar={w.data.avatar ?? machineAvatars[w.id]} size={34} />
+            <MachineAvatar machine={w.data.machine} avatar={w.data.avatar ?? machineAvatars[w.id]} size={34} platform={w.data.platform} />
             <div>
               <div class="wu-name">{w.data.machine}</div>
-              <div class="wu-platform">{w.data.platform}</div>
+              <div class={`wu-platform plat-${platformKey(w.data.platform)}`}>{w.data.platform}</div>
             </div>
             <div class="wu-meta">
               <span class={`badge cat-${w.data.category}`}>{w.data.category}</span>
@@ -131,13 +168,33 @@ const fmt = (d: Date) => d.toISOString().slice(0, 10);
     const empty = document.getElementById('wu-empty');
     const countEl = document.getElementById('wu-count');
     const moreBtn = document.getElementById('wu-more');
+    const filtersToggle = document.getElementById('wu-filters-toggle');
+    const filterPanel = document.getElementById('wu-filter-panel') as HTMLElement | null;
+    const filtersSign = document.getElementById('wu-filters-sign');
+    const filtersBadge = document.getElementById('wu-filters-badge');
+    const clearBtn = document.getElementById('wu-clear');
     const PAGE = Number(gallery?.dataset.pageSize) || 0;
-    const state = { cat: 'All', diff: 'All', q: '' };
+    const state = { cat: 'All', diff: 'All', plat: 'All', q: '' };
     let page = 1;
 
     function resetPage() { page = 1; }
 
-    function groupClick(group: string, attr: string, key: 'cat' | 'diff') {
+    function openPanel(open: boolean) {
+      if (!filterPanel || !filtersToggle) return;
+      filterPanel.hidden = !open;
+      filtersToggle.setAttribute('aria-expanded', String(open));
+      if (filtersSign) filtersSign.textContent = open ? '[-]' : '[+]';
+    }
+
+    function updateBadge() {
+      const active = [state.cat, state.diff, state.plat].filter((v) => v !== 'All').length;
+      if (!filtersBadge) return;
+      filtersBadge.textContent = active > 0 ? `·${active}` : '';
+      filtersBadge.hidden = active === 0;
+      filtersToggle?.classList.toggle('has-active', active > 0);
+    }
+
+    function groupClick(group: string, attr: string, key: 'cat' | 'diff' | 'plat') {
       document.querySelectorAll<HTMLButtonElement>(`[data-group="${group}"] .chip`).forEach((btn) => {
         btn.addEventListener('click', () => {
           state[key] = btn.getAttribute(attr) || 'All';
@@ -145,12 +202,28 @@ const fmt = (d: Date) => d.toISOString().slice(0, 10);
             .querySelectorAll(`[data-group="${group}"] .chip`)
             .forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
           resetPage();
+          updateBadge();
           render();
         });
       });
     }
     groupClick('cat', 'data-cat', 'cat');
     groupClick('diff', 'data-diff', 'diff');
+    groupClick('plat', 'data-plat', 'plat');
+
+    filtersToggle?.addEventListener('click', () => openPanel(filterPanel?.hidden !== false));
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && filterPanel && !filterPanel.hidden) openPanel(false); });
+
+    clearBtn?.addEventListener('click', () => {
+      state.cat = 'All'; state.diff = 'All'; state.plat = 'All';
+      document.querySelectorAll<HTMLButtonElement>('.filter-panel .chip[data-cat], .filter-panel .chip[data-diff], .filter-panel .chip[data-plat]').forEach((b) => {
+        const isAll = b.getAttribute('data-cat') === 'All' || b.getAttribute('data-diff') === 'All' || b.getAttribute('data-plat') === 'All';
+        b.setAttribute('aria-pressed', String(isAll));
+      });
+      resetPage();
+      updateBadge();
+      render();
+    });
 
     search?.addEventListener('input', () => { state.q = search.value.toLowerCase().trim(); resetPage(); render(); });
     sortSel?.addEventListener('change', () => { resetPage(); render(); });
@@ -159,9 +232,10 @@ const fmt = (d: Date) => d.toISOString().slice(0, 10);
     function matches(c: HTMLElement) {
       const okCat = state.cat === 'All' || c.dataset.cat === state.cat;
       const okDiff = state.diff === 'All' || c.dataset.diff === state.diff;
-      const hay = `${c.dataset.name} ${c.dataset.tags} ${c.dataset.cat} ${c.dataset.diff}`.toLowerCase();
+      const okPlat = state.plat === 'All' || c.dataset.plat === state.plat;
+      const hay = `${c.dataset.name} ${c.dataset.tags} ${c.dataset.cat} ${c.dataset.diff} ${c.dataset.plat}`.toLowerCase();
       const okQ = !state.q || hay.includes(state.q);
-      return okCat && okDiff && okQ;
+      return okCat && okDiff && okPlat && okQ;
     }
 
     function render() {
