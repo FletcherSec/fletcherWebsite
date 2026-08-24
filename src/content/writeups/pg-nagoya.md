@@ -320,7 +320,7 @@ In bloodhound, we don't see anything significant about svc_mssql but we do find 
 - joanna.wood
 - bethan.webstersvc
 
-![[Screenshot 2026-07-08 193039.png]]
+![BloodHound Cypher graph showing multiple users with GenericAll rights over the Helpdesk group, which chains via MemberOf to Remote Management Users](/media/Screenshot%202026-07-08%20193039.png)
 
 After discovering this I change svc_helpdesk's password to 'NewPassword123!' via GenericAll ACE.
 

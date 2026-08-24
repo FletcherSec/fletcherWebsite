@@ -26,4 +26,4 @@ pnpm-debug.log*
 # claude code local permission grants (machine-specific)
 .claude/settings.local.json
 # raw obsidian media dump (staging); served copies live in public/media/
-media/
+/media/

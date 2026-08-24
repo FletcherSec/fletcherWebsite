@@ -348,7 +348,7 @@ We spray `arthur:KingOfAtlantis` against rdp and gain access:
 xfreerdp /v:192.168.107.168 /u:arthur /p:KingOfAtlantis
 ```
 
-![[Pasted image 20260815190255.png]]
+![RDP session onto the target desktop as arthur](/media/Pasted%20image%2020260815190255.png)
 
 ## Privilege Escalation
 
@@ -388,12 +388,12 @@ We get the Privilege Escalation exploit and read it:
 I watch the video on the exploit but when I went to perform it, I notice that the TotalAV subscription is expired so I cannot scan my .dll, a crucial step.
 
 I continue with enumeration and download winPEAS to the box:
-![[Pasted image 20260815192706.png]]
+![whoami /priv showing the current user's enabled/disabled privileges](/media/Pasted%20image%2020260815192706.png)
 
-![[Pasted image 20260815193319.png]]
+![winPEAS interesting-services output listing non-Microsoft services with weak file permissions](/media/Pasted%20image%2020260815193319.png)
 
 I also see this:
-![[Pasted image 20260815193349.png]]
+![winPEAS flagging the TotalAV service binary as writable by Everyone/Users](/media/Pasted%20image%2020260815193349.png)
 
 I swapped out TotalAV.exe for a revshell .exe and restarted the box but I simply got a shell back as arthur:
 
@@ -419,7 +419,7 @@ We run this oneliner to enumerate services, looking for anyones run by SYSTEM th
 Get-CimInstance Win32_Service | Where-Object { $_.Caption -notmatch 'Windows' -and $_.PathName -notmatch 'Windows' -and $_.PathName -notmatch 'policyhost.exe' -and $_.Name -ne 'LSM' -and $_.PathName -notmatch 'OSE.EXE' -and $_.PathName -notmatch 'OSPPSVC.EXE' -and $_.PathName -notmatch 'Microsoft Security Client' -and $_.Name -notmatch 'edge' -and $_.Caption -notmatch 'edge' -and $_.PathName -notmatch 'edge' } | Sort-Object StartName | ForEach-Object { sc.exe qc "$($_.Name)" 4096; "" }
 ```
 
-![[Pasted image 20260815194319.png]]
+![sc.exe qc output confirming the GlassFish, TotalAV, and SynaMan services run as LocalSystem](/media/Pasted%20image%2020260815194319.png)
 
 It seems like any of these should be hijackable.
 
@@ -430,7 +430,7 @@ We make and transfer our reverse shell as an exe with msfvenom (I already have d
 
 Now we swap out the binary for our revshell under the legitimate binaries name.
 
-![[Pasted image 20260815194907.png]]
+![Renaming the legitimate service binary aside and moving our reverse shell into its place](/media/Pasted%20image%2020260815194907.png)
 
 We then start a listener, restart the box to cause the service to run our arbitrary binary, and we get a callback to our listener!
 
