@@ -176,6 +176,35 @@ trip the drift warning.)
 7. **Eyeball it.** Start the dev server and screenshot the writeup page + the gallery row
    to confirm badges/colors/highlighting render (see the project's screenshot loop, or use
    the Playwright MCP once loaded).
+8. **Verify every count/index that correlates with writeups — every time, no exceptions.**
+   These are all computed dynamically from `getCollection('writeups')` (see
+   `src/pages/index.astro`, `src/pages/writeups/index.astro`, `src/components/Nav.astro`,
+   `src/components/WriteupsGallery.astro`) so nothing needs manual editing — but "it's
+   dynamic" is not the same as "I checked it." After every batch of writeups, actually run
+   the dev/preview server and confirm, don't assume:
+   - **Archive per-platform counts** (`/writeups` header, e.g. "35 Proving Grounds · 22 Hack
+     The Box") went up by exactly the number of boxes you added, split correctly by platform.
+   - **Homepage rooms-completed counter** (`src/pages/index.astro` — HTB `systemOwns` + THM
+     `rooms` + count of `platform: Proving Grounds` writeups) increased by the number of PG
+     writeups added (HTB/THM boxes don't move this; only PG writeups do, since those two
+     other numbers come from `profiles.json`, not the collection).
+   - **Terminal tab-completion / `cd`/`cat` indexing** (`Nav.astro`'s `data-slugs`) — grep the
+     built HTML for each new slug to confirm it's present, then actually exercise it: `cat
+     <new-slug>` should tab-complete and open the page; a truncated prefix should narrow to
+     it uniquely or list it among the candidates. This is automatic (no per-writeup wiring),
+     but "automatic" has failed silently before via unrelated bugs (see the `.gitignore` note
+     below) — check it, don't assume it.
+   - **Images.** If a writeup embeds screenshots, copy the source PNGs into `public/media/`
+     and convert any Obsidian `![[name.png]]` wikilink syntax to real markdown image syntax
+     with descriptive alt text: `![alt text](/media/name%20with%20spaces%20url-encoded.png)`
+     — Obsidian embeds are not valid Markdown and render as literal text, not images.
+     **Then confirm the images are actually tracked by git** (`git status --short
+     public/media/` should show them, not silence) before committing — `public/media/` was
+     silently swallowed by an overly broad `.gitignore` pattern once before (fixed
+     2026-08-24: `media/` → `/media/`), which meant every writeup screenshot rendered fine
+     locally from untracked files but 404'd in production. Don't assume a git-ignored
+     directory issue can't recur elsewhere; a plain `git status --short` after staging is
+     the cheap check that catches it.
 
 ## Definition of done (per writeup)
 
@@ -185,6 +214,12 @@ trip the drift warning.)
 - [ ] `npm run build` succeeds
 - [ ] Renders correctly (badges, difficulty/OS colors, highlighted code)
 - [ ] Replaced the corresponding placeholder seed (if applicable)
+- [ ] Images (if any): copied to `public/media/`, wikilinks converted to real markdown
+      image syntax with alt text, and confirmed tracked by git (not silently ignored)
+- [ ] Archive per-platform counts increased correctly for what was added
+- [ ] Homepage rooms-completed counter increased correctly (PG writeups only move it)
+- [ ] New slug(s) confirmed present in the terminal's `data-slugs` and actually
+      tab-complete / `cat` successfully in a running preview — not just assumed dynamic
 
 ## Examples
 
