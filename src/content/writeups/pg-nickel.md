@@ -2,7 +2,7 @@
 machine: Nickel
 platform: Proving Grounds
 category: Windows
-difficulty: Insane
+difficulty: Hard
 tags: [custom-api, credential-hunting, pdf-cracking, ligolo, command-injection]
 date: 2026-08-06
 status: retired

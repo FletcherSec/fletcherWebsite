@@ -2,7 +2,7 @@
 machine: PayDay
 platform: Proving Grounds
 category: Linux
-difficulty: Easy
+difficulty: Medium
 tags: [cs-cart, phtml-upload, lfi, weak-credentials, sudo-misconfiguration]
 date: 2026-07-21
 status: retired

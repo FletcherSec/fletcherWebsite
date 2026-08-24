@@ -2,7 +2,7 @@
 machine: Craft
 platform: Proving Grounds
 category: Windows
-difficulty: Medium
+difficulty: Hard
 tags: [file-upload, odt-macro, lateral-movement, seimpersonate, godpotato]
 date: 2026-07-24
 status: retired

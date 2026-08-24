@@ -82,8 +82,20 @@ Deriving fields from a raw writeup:
   (`Linux`/`Windows`). Mirrors the `HTB/Challenge Boxes/{AD,Linux,Windows}/` folders.
 - **os** — the underlying OS (Windows artifacts: `winrm`, `smb`, `.exe`; Linux: `bash`,
   `sudo`, cron). For AD boxes set `os: Windows`. Optional; omit if it equals category.
-- **difficulty** — use the author's stated rating; otherwise infer from chain complexity and
-  **flag for confirmation**.
+- **difficulty** — for **Proving Grounds** boxes, always look up the rating in Lain
+  Kusanagi's OSCP-prep spreadsheet — https://docs.google.com/spreadsheets/d/13YoNQuY6HC5ot-lZiX2tY9pR5mvwnp3xV6lHs78DlqQ/edit?gid=878934599#gid=878934599
+  (the "Proving Grounds Practice" tab, split into Linux / Windows / Windows Active
+  Directory). This is the **sole authoritative source for PG difficulty** — do not use
+  blog-post "community difficulty" discussions, OffSec's own in-platform label, or infer
+  from chain complexity; those were tried and got it wrong for at least one box (Fired:
+  blog posts and OffSec's own label both said a notch too easy; the sheet said Hard).
+  Map the sheet's four tiers directly to the site's enum: `Easy`→`Easy`,
+  `Intermediate`→`Medium`, `Hard`→`Hard`, `Very Hard`→`Insane`. If a box genuinely isn't
+  in the sheet, say so explicitly and ask James rather than falling back to guesswork or
+  outside "community rating" research.
+  For **Hack The Box** boxes, use the author's stated rating, or HTB's own official
+  difficulty for that machine; otherwise infer from chain complexity and **flag for
+  confirmation**.
 - **tags** — pull the actual techniques used (e.g. `eternalblue`, `as-rep-roasting`, `xxe`,
   `lxd`, `cron`). Lowercase, hyphenated. These power the archive filters, so be accurate.
 - **summary** — a short, **non-spoiler** abstract of what the box *tests*: its architecture

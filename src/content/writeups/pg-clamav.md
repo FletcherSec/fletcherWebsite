@@ -2,7 +2,7 @@
 machine: ClamAV
 platform: Proving Grounds
 category: Linux
-difficulty: Easy
+difficulty: Medium
 tags: [samba, snmp, sendmail, clamav-milter, inetd, rce]
 date: 2026-07-20
 status: retired

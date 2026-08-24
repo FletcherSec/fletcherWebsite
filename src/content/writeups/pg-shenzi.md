@@ -2,7 +2,7 @@
 machine: Shenzi
 platform: Proving Grounds
 category: Windows
-difficulty: Medium
+difficulty: Hard
 tags: [wordpress, smb-guest, credential-exposure, malicious-plugin, alwaysinstallelevated]
 date: 2026-08-19
 status: retired

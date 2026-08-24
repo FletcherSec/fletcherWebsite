@@ -2,7 +2,7 @@
 machine: Billyboss
 platform: Proving Grounds
 category: Windows
-difficulty: Insane
+difficulty: Hard
 tags: [nexus-repository-manager, authenticated-rce, seimpersonate, godpotato]
 date: 2026-07-19
 status: retired

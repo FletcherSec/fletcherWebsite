@@ -2,7 +2,7 @@
 machine: Fired
 platform: Proving Grounds
 category: Linux
-difficulty: Medium
+difficulty: Hard
 tags: [openfire, cve-2023-32315, auth-bypass, plugin-rce, credential-reuse]
 date: 2026-08-24
 status: retired

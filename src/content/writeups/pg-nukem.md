@@ -2,7 +2,7 @@
 machine: Nukem
 platform: Proving Grounds
 category: Linux
-difficulty: Medium
+difficulty: Hard
 tags: [wordpress, simple-file-list, file-upload, gtfobins, linux-capabilities]
 date: 2026-08-19
 status: retired

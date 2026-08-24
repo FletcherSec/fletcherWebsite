@@ -2,7 +2,7 @@
 machine: Bratarina
 platform: Proving Grounds
 category: Linux
-difficulty: Easy
+difficulty: Medium
 tags: [smtp, opensmtpd, cve-2020-7247, metasploit, samba]
 date: 2026-07-23
 status: retired

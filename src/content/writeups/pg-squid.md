@@ -2,7 +2,7 @@
 machine: Squid
 platform: Proving Grounds
 category: Windows
-difficulty: Medium
+difficulty: Hard
 tags: [squid-proxy, port-scanning-via-proxy, phpmyadmin, godpotato, seimpersonate]
 date: 2026-07-27
 status: retired

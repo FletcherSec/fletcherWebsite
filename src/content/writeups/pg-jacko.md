@@ -2,7 +2,7 @@
 machine: Jacko
 platform: Proving Grounds
 category: Windows
-difficulty: Medium
+difficulty: Hard
 tags: [h2-database, rce, seimpersonate, godpotato]
 date: 2026-07-17
 status: retired

@@ -2,7 +2,7 @@
 machine: Nibbles
 platform: Proving Grounds
 category: Linux
-difficulty: Easy
+difficulty: Medium
 tags: [postgresql, cve-2019-9193, suid, default-credentials]
 date: 2026-07-23
 status: retired

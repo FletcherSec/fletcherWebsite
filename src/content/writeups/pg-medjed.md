@@ -2,7 +2,7 @@
 machine: Medjed
 platform: Proving Grounds
 category: Windows
-difficulty: Easy
+difficulty: Hard
 tags: [webdav, barracuda-server, ftp-anonymous, credential-guessing]
 date: 2026-07-19
 status: retired
