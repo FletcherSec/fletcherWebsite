@@ -200,12 +200,24 @@ trip the drift warning.)
      `rooms` + count of `platform: Proving Grounds` writeups) increased by the number of PG
      writeups added (HTB/THM boxes don't move this; only PG writeups do, since those two
      other numbers come from `profiles.json`, not the collection).
-   - **Terminal tab-completion / `cd`/`cat` indexing** (`Nav.astro`'s `data-slugs`) — grep the
-     built HTML for each new slug to confirm it's present, then actually exercise it: `cat
-     <new-slug>` should tab-complete and open the page; a truncated prefix should narrow to
-     it uniquely or list it among the candidates. This is automatic (no per-writeup wiring),
-     but "automatic" has failed silently before via unrelated bugs (see the `.gitignore` note
-     below) — check it, don't assume it.
+   - **Terminal tab-completion / `cd`/`cat` indexing** (`Nav.astro`'s `data-writeups`, a
+     `[slug, machine-name]` pair per writeup) — grep the built HTML for each new entry to
+     confirm it's present, then actually exercise it in a running preview: `cat <name>`
+     using the box's **plain machine name** (e.g. `cat mzeeav`, not `cat pg-mzeeav`) must
+     tab-complete and open the page, for every platform, not just the writeup's raw URL
+     slug. This matters specifically for Proving Grounds: PG writeups are stored as
+     `pg-<name>` to keep a stable URL lane separate from HTB (see Frontmatter schema
+     above), but a visitor naturally types the bare box name — `Nav.astro` resolves either
+     form via `resolveSlug()`, which checks `nameToSlug` (built from unique machine names)
+     before falling back to the raw slug. **Fixed 2026-08-26**: earlier PG writeups could
+     only be opened by their full `pg-<name>` slug — the natural bare name silently failed
+     with "No such file or directory" — because the terminal only ever indexed raw slugs.
+     Don't assume "the count went up so indexing works" (checking a count is not the same
+     as checking that `cat <name>` resolves); actually run `cat <name>` for a couple of the
+     boxes you just added. The only names that *don't* get a bare-name alias are ones that
+     collide with a different writeup's real slug across platforms (currently `Access` and
+     `Nibbles` each have both an HTB and a PG box) — those still resolve fine via their full
+     slugs, this is intentional and not a bug to "fix" again.
    - **Images.** If a writeup embeds screenshots, copy the source PNGs into `public/media/`
      and convert any Obsidian `![[name.png]]` wikilink syntax to real markdown image syntax
      with descriptive alt text: `![alt text](/media/name%20with%20spaces%20url-encoded.png)`
@@ -230,8 +242,9 @@ trip the drift warning.)
       image syntax with alt text, and confirmed tracked by git (not silently ignored)
 - [ ] Archive per-platform counts increased correctly for what was added
 - [ ] Homepage rooms-completed counter increased correctly (PG writeups only move it)
-- [ ] New slug(s) confirmed present in the terminal's `data-slugs` and actually
-      tab-complete / `cat` successfully in a running preview — not just assumed dynamic
+- [ ] New writeup(s) confirmed present in the terminal's `data-writeups`, and `cat
+      <plain-machine-name>` (not just the raw `pg-<name>`/HTB slug) actually tab-completes
+      and opens the page in a running preview — not just assumed dynamic
 
 ## Examples
 

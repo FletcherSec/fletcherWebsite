@@ -11,11 +11,15 @@ const links = [
   { href: '/#about', label: 'about' },
 ];
 
-// valid writeup paths, so the prompt can `cd /writeups/<name>` and reject typos
-const slugs = (await getCollection('writeups'))
+// valid writeup paths, so the prompt can `cd /writeups/<name>` and reject typos.
+// Pairs [slug, machine name] rather than just the slug — PG writeups are
+// stored as pg-<name> (to keep a stable URL lane separate from HTB) but a
+// visitor naturally types the box's real name, e.g. `cat mzeeav`, not
+// `cat pg-mzeeav`. The client resolves either form (see resolveSlug below).
+const writeupEntries = (await getCollection('writeups'))
   .filter((w) => !w.data.draft)
-  .map((w) => w.id)
-  .sort();
+  .map((w) => [w.id, w.data.machine.toLowerCase()] as const)
+  .sort((a, b) => a[0].localeCompare(b[0]));
 ---
 <style>
   .nav-bar {
@@ -78,7 +82,7 @@ const slugs = (await getCollection('writeups'))
 
 <nav class="nav">
   <div class="container nav-bar">
-    <div class="brand brand-term" id="brandTerm" data-slugs={JSON.stringify(slugs)}>
+    <div class="brand brand-term" id="brandTerm" data-writeups={JSON.stringify(writeupEntries)}>
       <span class="prompt"><b>fletcher</b><span class="at">@portfolio</span><span class="sep">:</span><span class="cwd" id="cwd">~</span><span class="sep">$ </span></span>
       <input
         id="cmdInput"
@@ -116,8 +120,29 @@ const slugs = (await getCollection('writeups'))
   const msg = document.getElementById('cmdMsg');
   let msgTimer: number | undefined;
 
+  // `slugs` = every writeup's real URL id (e.g. "pg-mzeeav") — always resolvable.
+  // `nameToSlug` = bare machine name → slug, but only for names that are unique
+  // across the whole collection. A couple of names collide across platforms
+  // (e.g. "Access" and "Nibbles" each have both an HTB and a PG writeup) — for
+  // those we skip the alias entirely rather than pick a winner silently, so
+  // both stay reachable only by their distinct real slugs, same as before.
   let slugs = new Set<string>();
-  try { slugs = new Set(JSON.parse(term?.dataset.slugs || '[]')); } catch (e) {}
+  let nameToSlug = new Map<string, string>();
+  try {
+    const entries: [string, string][] = JSON.parse(term?.dataset.writeups || '[]');
+    const nameCounts = new Map<string, number>();
+    for (const [, name] of entries) nameCounts.set(name, (nameCounts.get(name) || 0) + 1);
+    for (const [slug, name] of entries) {
+      slugs.add(slug);
+      if (nameCounts.get(name) === 1) nameToSlug.set(name, slug);
+    }
+  } catch (e) {}
+
+  // resolve a typed token (already lowercased/stripped by slugOf) to a real
+  // slug — an exact slug match always wins over a name alias.
+  function resolveSlug(s: string): string | undefined {
+    return slugs.has(s) ? s : nameToSlug.get(s);
+  }
 
   function flash(text: string, isErr = false) {
     if (!msg) return;
@@ -167,7 +192,7 @@ const slugs = (await getCollection('writeups'))
     if (low === 'writeups') return { path: '/writeups' };
     // pointing cd at a writeup file is a "not a directory" error, like a real shell
     const s = slugOf(a);
-    if (slugs.has(s)) return 'notdir';
+    if (resolveSlug(s)) return 'notdir';
     return null;
   }
 
@@ -190,7 +215,8 @@ const slugs = (await getCollection('writeups'))
     const low = a.toLowerCase().replace(/\/+$/, '').replace(/^~?\.?\//, '');
     if (low === 'writeups' || SECTIONS.has(low)) { flash(cmd + ': ' + a + ': Is a directory', true); return; }
     const s = slugOf(a);
-    if (slugs.has(s)) { flash('opening ~/writeups/' + s + '.md …'); go({ path: '/writeups/' + s }); return; }
+    const resolved = resolveSlug(s);
+    if (resolved) { flash('opening ~/writeups/' + resolved + '.md …'); go({ path: '/writeups/' + resolved }); return; }
     flash(cmd + ': ' + a + ': No such file or directory', true);
   }
 
@@ -262,7 +288,7 @@ const slugs = (await getCollection('writeups'))
     const cmd = value.slice(0, sp).toLowerCase();
     let pool: string[] = [];
     if (cmd === 'cd') pool = ['..', 'writeups', ...SECTIONS];
-    else if (['cat', 'open', 'less', 'more', 'vim', 'nano'].includes(cmd)) pool = [...slugs];
+    else if (['cat', 'open', 'less', 'more', 'vim', 'nano'].includes(cmd)) pool = [...new Set([...slugs, ...nameToSlug.keys()])];
     const list = pool.filter((x) => x.toLowerCase().startsWith(token)).sort();
     return { base, list };
   }
