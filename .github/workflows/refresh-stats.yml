@@ -10,6 +10,11 @@ on:
     - cron: '17 7 * * *'
   # let you run it on demand from the Actions tab
   workflow_dispatch:
+    inputs:
+      debug:
+        description: 'Log every JSON endpoint the THM/HTB profile pages call'
+        type: boolean
+        default: false
 
 # share the deploy lock with deploy.yml so a stats refresh and a code push
 # never rsync to the box at the same time
@@ -45,7 +50,9 @@ jobs:
           # machine owns + global ranking. Optional: without it the scraper
           # keeps the last-known values for those fields.
           HTB_TOKEN: ${{ secrets.HTB_TOKEN }}
-        run: npm run scrape
+        # exits non-zero (fails the run) if BOTH profiles come back with nothing
+        # fresh, so a silent multi-week freeze can't happen again
+        run: npm run scrape ${{ (github.event_name == 'workflow_dispatch' && inputs.debug) && '-- --debug' || '' }}
 
       - name: Commit refreshed data (if changed)
         run: |
