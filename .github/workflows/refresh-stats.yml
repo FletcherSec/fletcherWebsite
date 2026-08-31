@@ -1,7 +1,8 @@
 name: Refresh stats (HTB / THM)
 
-# Daily cron that re-scrapes the TryHackMe + Hack The Box profiles, commits the
-# refreshed src/data/profiles.json back to the repo, then rebuilds and deploys.
+# Daily cron that refreshes the TryHackMe + Hack The Box numbers (direct JSON
+# API calls — see scripts/scrape-profiles.mjs), commits the updated
+# src/data/profiles.json back to the repo, then rebuilds and deploys.
 # (A push made with the default GITHUB_TOKEN does NOT trigger deploy.yml, so we
 # build + rsync inline here rather than relying on the push event.)
 on:
@@ -12,7 +13,7 @@ on:
   workflow_dispatch:
     inputs:
       debug:
-        description: 'Log every JSON endpoint the THM/HTB profile pages call'
+        description: 'Dump every raw JSON payload the refresh fetches'
         type: boolean
         default: false
 
@@ -41,17 +42,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
-
-      - name: Scrape HTB + THM profiles
+      - name: Refresh HTB + THM numbers
         env:
-          # HTB App Token (Settings > App Tokens) enriches the HTB card with
-          # machine owns + global ranking. Optional: without it the scraper
-          # keeps the last-known values for those fields.
+          # Optional. `hackthebox_session` cookie from a logged-in browser —
+          # the only way to read the HTB XP / level / weekly-streak fields.
+          # Without it those keep their last-known values. Expires every few
+          # weeks; refresh when the XP numbers stop moving.
+          HTB_SESSION: ${{ secrets.HTB_SESSION }}
+          # Optional legacy fallback source for the owns + ranking numbers.
           HTB_TOKEN: ${{ secrets.HTB_TOKEN }}
-        # exits non-zero (fails the run) if BOTH profiles come back with nothing
-        # fresh, so a silent multi-week freeze can't happen again
+        # exits non-zero (fails the run) if BOTH THM and HTB come back empty,
+        # so a silent multi-week freeze can't happen again
         run: npm run scrape ${{ (github.event_name == 'workflow_dispatch' && inputs.debug) && '-- --debug' || '' }}
 
       - name: Commit refreshed data (if changed)
