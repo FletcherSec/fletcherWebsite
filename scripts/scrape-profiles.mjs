@@ -4,30 +4,30 @@
  * src/data/profiles.json, which the site renders at build time.
  *
  * History: this used to drive a headless Playwright browser and capture the
- * SPAs' own XHRs. That broke — TryHackMe now sits behind a Vercel bot
- * challenge and Hack The Box's profile SPA is auth-gated — so a headless,
- * logged-out browser on a CI runner captured nothing and the data silently
- * froze while the daily job kept committing a `scrapedAt` bump. We now call
- * the JSON endpoints directly with browser-ish headers instead:
+ * profile SPAs' own XHRs. That broke — TryHackMe went behind a Vercel bot
+ * challenge and Hack The Box's "advanced profile" service is auth-gated — so a
+ * headless, logged-out browser on a CI runner captured nothing and the numbers
+ * silently froze while the daily job kept committing a `scrapedAt` bump. We now
+ * hit the public JSON endpoints directly with browser-ish headers:
  *
  *   TryHackMe : GET tryhackme.com/api/v2/public-profile?username=<user>
- *               -> public, returns level/points/rooms/badges/streak/rank/%
- *   Hack The Box (owns + ranks):
- *               GET labs.hackthebox.com/api/v4/profile/<numericId>
- *               -> public, returns name/user_owns/system_owns/rank/ranking/…
- *   Hack The Box (XP / level / weekly streak):
- *               only served to the logged-in user for themselves. Set
- *               HTB_SESSION to the `hackthebox_session` cookie value to fetch
- *               it; without it those fields keep their last-known values.
+ *               -> public; level / points / rooms / badges / streak / rank / %
+ *   Hack The Box : GET labs.hackthebox.com/api/v4/profile/<numericId>
+ *               -> public; handle / owns / classic rank + progress / ranking
+ *
+ * Note: HTB's XP-system numbers (experience level, total XP, weekly streak) are
+ * only served to the logged-in user for themselves, behind a session cookie
+ * that rotates every few days, so they can't be refreshed unattended. The card
+ * uses the classic rank + rank progress instead.
  *
  * Usage:
  *   node scripts/scrape-profiles.mjs            # refresh, write the data file
  *   node scripts/scrape-profiles.mjs --debug    # also dump every raw payload
  *
- * On failure: a side that returns nothing fresh keeps its last-known values
- * (logged as ::warning::). If BOTH THM and HTB core come back empty, the file
- * is left byte-identical (no hollow commit) and the process exits 1 so the
- * GitHub Actions run goes red.
+ * On failure: a side that returns nothing keeps its last-known values (logged
+ * as ::warning::). If BOTH sides come back empty, profiles.json is left
+ * byte-identical (no hollow commit) and the process exits 1 so the GitHub
+ * Actions run goes red.
  */
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -39,20 +39,9 @@ const ASSET_DIR = resolve(__dirname, '../public/profiles'); // served at /profil
 const DEBUG = process.argv.includes('--debug');
 
 const THM_USER = 'fletched';
-const HTB_ID = '019d01a2-fe18-71a5-a7a7-b0a37312b859'; // account uuid (profile.hackthebox.com)
-const HTB_USER_ID = '1639899'; // numeric id for the v4 API
+const HTB_USER_ID = '1639899';
 const THM_URL = `https://tryhackme.com/p/${THM_USER}`;
-const HTB_PROFILE_URL = `https://app.hackthebox.com/users/${HTB_USER_ID}`; // shown on the site
-
-// Optional. HTB_SESSION = the `hackthebox_session` cookie from a logged-in
-// browser (DevTools > Application > Cookies > https://profile.hackthebox.com).
-// Only used to read the XP / level / weekly-streak fields, which HTB serves
-// only to the authenticated user. Expires every few weeks — refresh when the
-// XP numbers stop moving.
-const HTB_SESSION = process.env.HTB_SESSION;
-// Optional legacy: an HTB App Token still works as a fallback source for the
-// owns + ranking numbers via the authed v4 endpoint.
-const HTB_TOKEN = process.env.HTB_TOKEN;
+const HTB_PROFILE_URL = `https://app.hackthebox.com/users/${HTB_USER_ID}`; // link shown on the site
 
 const UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36';
@@ -119,6 +108,7 @@ async function saveAsset(url, name) {
 }
 
 const clean = (o) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined && v !== ''));
+const num = (n) => (Number.isFinite(n) ? n : undefined);
 
 async function scrapeTHM() {
   const body = await getJson(`https://tryhackme.com/api/v2/public-profile?username=${THM_USER}`, {
@@ -133,80 +123,33 @@ async function scrapeTHM() {
   return clean({
     handle: p.username ?? THM_USER,
     url: THM_URL,
-    level: p.level,
-    points: p.totalPoints,
-    rooms: p.completedRoomsNumber,
-    badges: p.badgesNumber,
-    streak: p.streak,
-    rank: Number.isFinite(p.rank) ? `#${p.rank.toLocaleString('en-US')}` : undefined,
-    topPercent: Number.isFinite(p.topPercentage) ? `Top ${p.topPercentage}%` : undefined,
+    level: num(p.level),
+    points: num(p.totalPoints),
+    rooms: num(p.completedRoomsNumber),
+    badges: num(p.badgesNumber),
+    streak: num(p.streak),
+    rank: num(p.rank) != null ? `#${p.rank.toLocaleString('en-US')}` : undefined,
+    topPercent: num(p.topPercentage) != null ? `Top ${p.topPercentage}%` : undefined,
     avatar,
   });
 }
 
 async function scrapeHTB() {
-  // 1) public: owns + classic rank + global ranking + respects.
-  const pub = (await getJson(`https://labs.hackthebox.com/api/v4/profile/${HTB_USER_ID}`))?.profile;
-
-  // 1b) fallback for the same fields via the authed v4 endpoint, if a token is set
-  //     and the public call came back empty.
-  let basic;
-  if (!pub && HTB_TOKEN) {
-    basic = (
-      await getJson(`https://labs.hackthebox.com/api/v4/user/profile/basic/${HTB_USER_ID}`, {
-        headers: { Authorization: `Bearer ${HTB_TOKEN}` },
-      })
-    )?.profile;
-  }
-  const core = pub ?? basic;
-
-  // 2) XP / level / weekly streak — only readable while logged in as this user.
-  let xp;
-  if (HTB_SESSION) {
-    const me = await getJson('https://profile.hackthebox.com/api/v1/user', {
-      referer: `https://profile.hackthebox.com/profile/${HTB_ID}`,
-      headers: { Cookie: `hackthebox_session=${HTB_SESSION}` },
-    });
-    // be liberal about field names — log the raw body with --debug to adjust.
-    const d = me?.data ?? me?.user ?? me ?? {};
-    const streak = d.streakData ?? d.streak ?? {};
-    xp = clean({
-      level: d.level ?? d.experienceLevel,
-      levelTitle: d.levelTitle ?? d.experienceLevelTitle ?? d.title,
-      xp: d.totalExperiencePoints ?? d.experiencePoints ?? d.xp,
-      streakWeeks: streak.counter ?? streak.current ?? d.currentStreak,
-      maxStreakWeeks: streak.maxStreak ?? streak.max ?? d.maxStreak,
-      rankImage: d.rankImage ?? d.levelImage,
-    });
-    if (!xp.level && !xp.xp) {
-      console.warn('::warning::HTB: session set but no XP fields recognised — run with --debug and adjust mapping');
-      xp = undefined;
-    }
-  } else {
-    console.warn('::warning::HTB_SESSION not set — XP / level / weekly streak keep their last-known values');
-  }
-
-  if (!core && !xp) {
-    console.warn('::warning::HTB: nothing fetched — kept last-known');
+  const p = (await getJson(`https://labs.hackthebox.com/api/v4/profile/${HTB_USER_ID}`))?.profile;
+  if (!p || p.name == null) {
+    console.warn('::warning::HTB: no profile data from the public v4 endpoint — kept last-known');
     return undefined;
   }
-
-  const rankIcon = xp?.rankImage ? ((await saveAsset(xp.rankImage, 'htb-rank.svg')) ?? xp.rankImage) : undefined;
-
   return clean({
-    handle: core?.name ?? 'fletched',
+    handle: p.name,
     url: HTB_PROFILE_URL,
-    level: xp?.level,
-    levelTitle: xp?.levelTitle,
-    xp: xp?.xp,
-    streakWeeks: xp?.streakWeeks,
-    maxStreakWeeks: xp?.maxStreakWeeks,
-    rankIcon,
-    userOwns: core?.user_owns,
-    systemOwns: core?.system_owns,
-    globalRanking: Number.isFinite(core?.ranking) ? `#${core.ranking.toLocaleString('en-US')}` : undefined,
-    classicRank: core?.rank, // Noob / Script Kiddie / Hacker / Pro Hacker / …
-    respects: core?.respects,
+    classicRank: p.rank, // Noob / Script Kiddie / Hacker / Pro Hacker / Elite / Guru / Omniscient
+    rankProgress: num(p.current_rank_progress), // % toward the next classic rank
+    nextRank: p.next_rank,
+    userOwns: num(p.user_owns), // machines with the user flag
+    systemOwns: num(p.system_owns), // machines rooted
+    globalRanking: num(p.ranking) != null ? `#${p.ranking.toLocaleString('en-US')}` : undefined,
+    respects: num(p.respects),
   });
 }
 
@@ -224,18 +167,17 @@ async function main() {
   }
 
   const prev = existsSync(OUT) ? JSON.parse(readFileSync(OUT, 'utf8')) : {};
-  // A scrape "counts" only if it returned more than just handle/url.
   const fresh = (next) => !!next && Object.keys(next).length > 2;
-  // Merge new-over-old per field so a partial refresh never wipes good data
-  // (e.g. no HTB_SESSION -> XP fields fall through to the last-known values).
-  const merge = (next, last) => (fresh(next) ? { ...last, ...next } : last);
+  // Replace, don't merge: each endpoint returns its whole field set, so a fresh
+  // result fully supersedes the last one (and drops fields we've stopped using).
+  const pick = (next, last) => (fresh(next) ? next : last);
 
   const thmOk = fresh(thm);
   const htbOk = fresh(htb);
 
   const out = {
-    tryhackme: merge(thm, prev.tryhackme),
-    hackthebox: merge(htb, prev.hackthebox),
+    tryhackme: pick(thm, prev.tryhackme),
+    hackthebox: pick(htb, prev.hackthebox),
     // Only advance the date when something actually refreshed, so a fully
     // blocked run leaves the file identical and produces no commit.
     scrapedAt: thmOk || htbOk ? new Date().toISOString().slice(0, 10) : (prev.scrapedAt ?? null),

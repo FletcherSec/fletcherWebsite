@@ -7,25 +7,20 @@
     "rooms": 74,
     "badges": 11,
     "streak": 0,
-    "rank": "#74,833",
+    "rank": "#75,619",
     "topPercent": "Top 3%",
-    "league": "bronze",
     "avatar": "/profiles/thm-avatar.png"
   },
   "hackthebox": {
-    "handle": "fletcher",
+    "handle": "fletched",
     "url": "https://app.hackthebox.com/users/1639899",
-    "level": 36,
-    "levelTitle": "Skilled",
-    "xp": 16805,
-    "streakWeeks": 8,
-    "maxStreakWeeks": 8,
-    "rankIcon": "/profiles/htb-rank.svg",
-    "userOwns": 31,
-    "systemOwns": 27,
-    "globalRanking": "#1,010",
     "classicRank": "Script Kiddie",
+    "rankProgress": 53.67,
+    "nextRank": "Hacker",
+    "userOwns": 33,
+    "systemOwns": 28,
+    "globalRanking": "#1,024",
     "respects": 0
   },
-  "scrapedAt": "2026-08-30"
+  "scrapedAt": "2026-08-31"
 }

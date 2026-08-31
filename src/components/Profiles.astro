@@ -22,10 +22,13 @@ const thmStats = thm
 
 const htbStats = htb
   ? [
+      { l: 'user owns', v: fmt(htb.userOwns) },
       { l: 'rooted', v: fmt(htb.systemOwns) },
-      { l: 'xp', v: fmt(htb.xp) },
-      { l: 'streak', v: htb.streakWeeks != null ? `${htb.streakWeeks}w` : '—' },
-      { l: 'level', v: htb.level != null ? String(htb.level) : '—' },
+      { l: 'global', v: htb.globalRanking ?? '—' },
+      {
+        l: htb.nextRank ? `→ ${htb.nextRank.toLowerCase()}` : 'rank progress',
+        v: typeof htb.rankProgress === 'number' ? `${Math.round(htb.rankProgress)}%` : '—',
+      },
     ]
   : [];
 ---
@@ -41,13 +44,12 @@ const htbStats = htb
       {htb && (
         <a class="prof-card" href={htb.url} target="_blank" rel="noopener">
           <div class="prof-head">
-            {htb.rankIcon
-              ? <img class="prof-rank" src={htb.rankIcon} width="40" height="40" alt={`HTB rank: ${htb.levelTitle}`} loading="lazy" />
-              : <span class="prof-ico" set:html={icons.hackthebox} />}
+            <span class="prof-ico" set:html={icons.hackthebox} />
             <div class="prof-id">
               <div class="prof-name">Hack The Box</div>
-              <div class="prof-handle">{htb.levelTitle ? `${htb.levelTitle} · @${htb.handle}` : `@${htb.handle}`}</div>
+              <div class="prof-handle">@{htb.handle}</div>
             </div>
+            {htb.classicRank && <span class="prof-tier">{htb.classicRank}</span>}
           </div>
           <div class="prof-stats">
             {htbStats.map((s) => (
@@ -95,7 +97,6 @@ const htbStats = htb
   .prof-head { display: flex; align-items: center; gap: 0.8rem; }
   .prof-ico { color: var(--accent); flex: none; }
   .prof-ico :global(svg) { width: 30px; height: 30px; display: block; }
-  .prof-rank { flex: none; width: 40px; height: 40px; object-fit: contain; filter: drop-shadow(0 0 6px rgba(167, 139, 250, 0.35)); }
   .prof-avatar {
     flex: none; width: 40px; height: 40px; border-radius: 50%;
     object-fit: cover; border: 1px solid var(--border); background: var(--bg-elev);
