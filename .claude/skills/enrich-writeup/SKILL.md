@@ -229,6 +229,30 @@ trip the drift warning.)
      locally from untracked files but 404'd in production. Don't assume a git-ignored
      directory issue can't recur elsewhere; a plain `git status --short` after staging is
      the cheap check that catches it.
+   - **HTB machine icon (`src/data/machineAvatars.ts`).** Every HTB writeup should carry
+     its real official machine avatar, not the generated-initials fallback. The normal
+     path — `HTB_TOKEN='...' node scripts/scrape-htb-avatars.mjs` — needs an authenticated
+     HTB App Token, which usually isn't available in this environment. **When there's no
+     token, use HTB's public "achievement" share pages instead** (discovered 2026-09-14):
+     1. Find a share page for the machine — web-search `"Owned <Machine> from Hack The
+        Box!" site:labs.hackthebox.com`, or search social posts announcing the pwn (X/
+        LinkedIn posts about "Owned <Machine>" link straight to one) — URL shape is
+        `labs.hackthebox.com/achievement/machine/<user-id>/<machine-id>`. These pages are
+        meant to be publicly shared, so they load with no login.
+     2. Fetch that page and pull the image URL out of it — it's a direct, unauthenticated,
+        publicly downloadable CDN link shaped like
+        `https://cdn.services-k8s.prod.aws.htb.systems/content/machines/avatar/<uuid>-<ts>.png`
+        (confirmed via `curl -sI` → `200`, `content-type: image/png` — no HTB session or
+        token needed to fetch the PNG itself, only the achievement *page* needs to exist
+        publicly, which it always does for a retired machine someone has pwned and shared).
+     3. Download it to `public/machines/<slug>.png` and add `"<slug>": "/machines/<slug>.png"`
+        to `machineAvatars.ts` (keep the map alphabetized).
+     4. **Eyeball the downloaded image before wiring it in** — confirm it's a real ~800×800
+        circular HTB machine badge and thematically plausible for the box (e.g. Enigma →
+        an actual Enigma cipher machine, Reactor → a nuclear reactor), not a placeholder or
+        a mismatched machine from a bad search hit.
+     Only fall back to the initials badge (i.e. leave the writeup out of `machineAvatars.ts`)
+     if no achievement page can be found for that specific machine at all.
 
 ## Definition of done (per writeup)
 
@@ -240,6 +264,8 @@ trip the drift warning.)
 - [ ] Replaced the corresponding placeholder seed (if applicable)
 - [ ] Images (if any): copied to `public/media/`, wikilinks converted to real markdown
       image syntax with alt text, and confirmed tracked by git (not silently ignored)
+- [ ] HTB writeups: real machine icon wired into `machineAvatars.ts` (via the achievement-
+      page CDN link if no `HTB_TOKEN`), not left on the initials fallback
 - [ ] Archive per-platform counts increased correctly for what was added
 - [ ] Homepage rooms-completed counter increased correctly (PG writeups only move it)
 - [ ] New writeup(s) confirmed present in the terminal's `data-writeups`, and `cat
