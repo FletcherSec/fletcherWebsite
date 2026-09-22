@@ -29,6 +29,11 @@ export type Post = { date: string; text: string; url: string };
 
 export const linkedinPosts: Post[] = [
   {
+    date: '2026-09-22',
+    text: "After hundreds of hours of focused studying, 100+ OSCP-Like boxes rooted (with over 75 of the PG/HTB boxes writeups published on https://lnkd.in/ere9ZMmb), and one failed exam attempt, I am proud to finally say that I have passed the OSCP exam. I scored 80/100 points, fully compromising 5 of the",
+    url: 'https://www.linkedin.com/feed/update/urn:li:activity:7507634467419709440/',
+  },
+  {
     date: '2026-05-10',
     text: "AI has changed the way people study. But most students are only scratching the surface of what's possible.The common workflow: record a lecture, paste the topic into an AI, get a generic summary. It works. Until you realize the AI's version",
     url: 'https://www.linkedin.com/feed/update/urn:li:activity:7459070527429783552/',
@@ -51,6 +56,7 @@ export const linkedinPosts: Post[] = [
 // post body (not just the truncated card blurb), shaped the same way:
 // domain · activity · theme.
 export const postTags: Record<string, string[]> = {
+  '7507634467419709440': ['pentest', 'oscp', 'achievement'],
   '7459070527429783552': ['ai', 'edtech', 'open-source'],
   '7449901870204039169': ['ctf', 'competition', 'achievement'],
   '7436109117787881472': ['pwn', 'binary-exploitation', 'pwntools'],
@@ -68,6 +74,15 @@ export type Cert = {
 
 export const certs: Cert[] = [
   {
+    name: 'Offensive Security Certified Professional+',
+    abbr: 'OSCP+',
+    issuer: 'OffSec',
+    date: '2026',
+    url: 'https://www.credential.net/30de5afa-140a-48d0-a400-16c920b3a95d#acc.FdrgvoLc',
+    blurb: 'The flagship hands-on pentest cert — a 24-hour practical exam compromising real machines end-to-end, backed by a professional report.',
+    icon: '/certs/oscp-plus.png',
+  },
+  {
     name: 'eLearnSecurity Junior Penetration Tester',
     abbr: 'eJPT',
     issuer: 'INE Security',
@@ -80,7 +95,7 @@ export const certs: Cert[] = [
     name: 'CompTIA Security+',
     abbr: 'Sec+',
     issuer: 'CompTIA',
-    date: '2024',
+    date: '2025',
     url: 'https://www.linkedin.com/in/james-weaver-cs/overlay/Certifications/1009084667/treasury?profileId=ACoAAFGBgssBseixWDAv_hG6VEeHUqeryeu_RSc',
     blurb: 'Foundational security cert covering threats, cryptography, IAM, and risk — the industry baseline.',
     icon: '/certs/security-plus.png',
@@ -89,7 +104,7 @@ export const certs: Cert[] = [
     name: 'AWS Certified Cloud Practitioner',
     abbr: 'AWS CCP',
     issuer: 'Amazon Web Services',
-    date: '2024',
+    date: '2026',
     url: 'https://www.credly.com/badges/bbbf51a7-50ac-4896-90a2-37d94b9f015b/public_url',
     blurb: 'Cloud fundamentals — core AWS services, the shared-responsibility model, billing, and security basics.',
     icon: '/certs/aws-ccp.png',

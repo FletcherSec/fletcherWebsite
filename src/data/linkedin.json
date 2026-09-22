@@ -1,6 +1,11 @@
 {
   "posts": [
     {
+      "date": "2026-09-22",
+      "text": "After hundreds of hours of focused studying, 100+ OSCP-Like boxes rooted (with over 75 of the PG/HTB boxes writeups published on https://lnkd.in/ere9ZMmb), and one failed exam attempt, I am proud to finally say that I have passed the OSCP exam. I scored 80/100 points, fully compromising 5 of the",
+      "url": "https://www.linkedin.com/feed/update/urn:li:activity:7507634467419709440/"
+    },
+    {
       "date": "2026-05-10",
       "text": "AI has changed the way people study. But most students are only scratching the surface of what's possible.The common workflow: record a lecture, paste the topic into an AI, get a generic summary. It works. Until you realize the AI's version",
       "url": "https://www.linkedin.com/feed/update/urn:li:activity:7459070527429783552/"
@@ -17,5 +22,5 @@
     }
   ],
   "source": "console",
-  "scrapedAt": "2026-06-10"
+  "scrapedAt": "2026-09-22"
 }
