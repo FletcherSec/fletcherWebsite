@@ -337,7 +337,9 @@ section, header[id], [id] { scroll-margin-top: 72px; }
 .proj-tech span { font-size: 0.72rem; font-family: var(--font-mono); color: var(--accent); border: 1px solid var(--border); border-radius: 999px; padding: 0.1rem 0.5rem; }
 
 /* ---------- certs -------------------------------------------------- */
-.cert-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.1rem; }
+.cert-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+@media (max-width: 900px) { .cert-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .cert-grid { grid-template-columns: 1fr; } }
 .cert-card {
   display: flex; gap: 1rem; align-items: flex-start;
   padding: 1.2rem; border-radius: var(--radius);
