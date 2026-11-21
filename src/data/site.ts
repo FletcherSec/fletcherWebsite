@@ -29,6 +29,21 @@ export type Post = { date: string; text: string; url: string };
 
 export const linkedinPosts: Post[] = [
   {
+    date: '2026-11-15',
+    text: 'This year, I had the privilege of representing Auburn University and leading our primary team "Aubie Fan Club" at CyberForce® Program in Chicago. We ultimately finished in 9th out of 100ish teams across the nation. Thanks to our extensive hardening this year, we had 100% service uptime,',
+    url: 'https://www.linkedin.com/feed/update/urn:li:activity:7527730064419962881/',
+  },
+  {
+    date: '2026-11-15',
+    text: 'About a week ago, I had the opportunity to lead a team on behalf of Auburn University and play the role of "Lead Penetration Tester" at the Southeast Global Collegiate Penetration Testing Competition (CPTC). Though we did not ultimately place top 3, we walked away with very',
+    url: 'https://www.linkedin.com/feed/update/urn:li:activity:7527720725814886401/',
+  },
+  {
+    date: '2026-11-03',
+    text: "Just finished Zero-Point Security Ltd's Certified Red Team Operator (CRTO) certification! Its primary emphasis is C2 operations (Cobalt Strike), AV evasion, and (relatively) advanced AD exploitation across multiple domains and subnets. While I passed the exam with a surprisingly high",
+    url: 'https://www.linkedin.com/feed/update/urn:li:activity:7523279483412422656/',
+  },
+  {
     date: '2026-09-22',
     text: "After hundreds of hours of focused studying, 100+ OSCP-Like boxes rooted (with over 75 of the PG/HTB boxes writeups published on https://lnkd.in/ere9ZMmb), and one failed exam attempt, I am proud to finally say that I have passed the OSCP exam. I scored 80/100 points, fully compromising 5 of the",
     url: 'https://www.linkedin.com/feed/update/urn:li:activity:7507634467419709440/',
@@ -56,6 +71,9 @@ export const linkedinPosts: Post[] = [
 // post body (not just the truncated card blurb), shaped the same way:
 // domain · activity · theme.
 export const postTags: Record<string, string[]> = {
+  '7527730064419962881': ['blue-team', 'cyberforce', 'team-lead'],
+  '7527720725814886401': ['pentest', 'cptc', 'team-lead'],
+  '7523279483412422656': ['red-team', 'c2-ops', 'achievement'],
   '7507634467419709440': ['pentest', 'oscp', 'achievement'],
   '7459070527429783552': ['ai', 'edtech', 'open-source'],
   '7449901870204039169': ['ctf', 'competition', 'achievement'],
@@ -81,6 +99,15 @@ export const certs: Cert[] = [
     url: 'https://www.credential.net/30de5afa-140a-48d0-a400-16c920b3a95d#acc.FdrgvoLc',
     blurb: 'The flagship hands-on pentest cert — a 24-hour practical exam compromising real machines end-to-end, backed by a professional report.',
     icon: '/certs/oscp-plus.png',
+  },
+  {
+    name: 'Certified Red Team Operator',
+    abbr: 'CRTO',
+    issuer: 'Zero-Point Security',
+    date: '2026',
+    url: 'https://certs.zeropointsecurity.co.uk/42561091-864a-48f2-a93b-8a4def60d057#acc.DayPFkb5',
+    blurb: 'Red team cert focused on C2 ops (Cobalt Strike), AV evasion (Defender, AppLocker, CLM), and advanced AD exploitation across multiple domains — delegation, ADCS, Kerberos abuse, and cross-forest trusts.',
+    icon: '/certs/crto.png',
   },
   {
     name: 'eLearnSecurity Junior Penetration Tester',

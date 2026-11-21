@@ -26,6 +26,14 @@ import { icons } from '../data/icons';
           </div>
         </article>
       ))}
+      <article class="cert-card cert-slot" aria-hidden="true">
+        <div class="cert-slot-glyph">+</div>
+        <div class="cert-body">
+          <h3>next up</h3>
+          <div class="issuer">// TBD</div>
+          <p>slot reserved for the next credential in progress.</p>
+        </div>
+      </article>
     </div>
   </div>
 </section>
@@ -57,4 +65,16 @@ import { icons } from '../data/icons';
   }
   .cv-ico { display: inline-flex; flex: none; }
   .cv-ico :global(svg) { width: 13px; height: 13px; display: block; }
+
+  /* empty "next cert" slot — makes the 2x3 shape read as intentional */
+  .cert-slot {
+    border-style: dashed; background: transparent; opacity: 0.55;
+  }
+  .cert-slot-glyph {
+    flex: none; width: 56px; height: 56px; border-radius: var(--radius);
+    display: grid; place-items: center;
+    font-family: var(--font-mono); font-weight: 700; font-size: 1.6rem;
+    color: var(--fg-dim); border: 1px dashed var(--border);
+  }
+  .cert-slot h3 { color: var(--fg-dim); }
 </style>
