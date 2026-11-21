@@ -106,7 +106,7 @@ export const certs: Cert[] = [
     issuer: 'Zero-Point Security',
     date: '2026',
     url: 'https://certs.zeropointsecurity.co.uk/42561091-864a-48f2-a93b-8a4def60d057#acc.DayPFkb5',
-    blurb: 'Red team cert focused on C2 ops (Cobalt Strike), AV evasion (Defender, AppLocker, CLM), and advanced AD exploitation across multiple domains — delegation, ADCS, Kerberos abuse, and cross-forest trusts.',
+    blurb: 'Red team cert focused on C2 ops (Cobalt Strike), AV evasion (Defender, AppLocker, CLM), and advanced AD exploitation across multiple domains.',
     icon: '/certs/crto.png',
   },
   {
