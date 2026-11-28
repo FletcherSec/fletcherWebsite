@@ -1,6 +1,11 @@
 {
   "posts": [
     {
+      "date": "2026-11-28",
+      "text": "Took a few days over Thanksgiving break to get CySA+!  I actually passed this one by a rather substantial margin, with a score of 827/900 with 750 as the passing score.  Overall, I found this certificate to be more enjoyable than Sec+ as it was more applied, but still not nearly as challenging as the practical exam format of OSCP or CRTO,",
+      "url": "https://www.linkedin.com/feed/update/urn:li:activity:7532471951290699776/"
+    },
+    {
       "date": "2026-11-15",
       "text": "This year, I had the privilege of representing Auburn University and leading our primary team \"Aubie Fan Club\" at CyberForce® Program in Chicago. We ultimately finished in 9th out of 100ish teams across the nation. Thanks to our extensive hardening this year, we had 100% service uptime,",
       "url": "https://www.linkedin.com/feed/update/urn:li:activity:7527730064419962881/"

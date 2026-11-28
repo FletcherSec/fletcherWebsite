@@ -71,6 +71,7 @@ export const linkedinPosts: Post[] = [
 // post body (not just the truncated card blurb), shaped the same way:
 // domain · activity · theme.
 export const postTags: Record<string, string[]> = {
+  '7532471951290699776': ['blue-team', 'incident-response', 'certificate'],
   '7527730064419962881': ['blue-team', 'cyberforce', 'team-lead'],
   '7527720725814886401': ['pentest', 'cptc', 'team-lead'],
   '7523279483412422656': ['red-team', 'c2-ops', 'achievement'],
@@ -117,6 +118,15 @@ export const certs: Cert[] = [
     url: 'https://certs.ine.com/401a9255-b6aa-4ee5-9233-30b65045de8c#acc.jZ2blNDK',
     blurb: 'Hands-on entry pentest cert — host/network enumeration, exploitation, and pivoting in a live lab exam.',
     icon: '/certs/ejpt.svg',
+  },
+  {
+    name: 'CompTIA Cybersecurity Analyst+',
+    abbr: 'CySA+',
+    issuer: 'CompTIA',
+    date: '2026',
+    url: 'https://www.credly.com/badges/be95f02b-815f-490d-b572-aa32dbda8352/public_url',
+    blurb: 'Blue-team analyst cert — threat detection, log and traffic analysis, vulnerability management, and incident response.',
+    icon: '/certs/cysa-plus.png',
   },
   {
     name: 'CompTIA Security+',
